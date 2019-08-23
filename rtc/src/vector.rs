@@ -107,7 +107,7 @@ impl ApproxEq for Vec3D {
         z: f64::EPSILON,
     };
     fn approx_eq(self, other: Self) -> bool {
-        (self - other).abs() < Self::EPSILON
+        (self - other).abs().into_iter().all(|c| c < f64::EPSILON)
     }
 }
 

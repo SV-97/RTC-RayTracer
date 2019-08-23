@@ -5,6 +5,7 @@ use super::approx_eq::ApproxEq;
 use super::vector::Vec3D;
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
+/// A point in 3D Space
 pub struct Point {
     pub x: f64,
     pub y: f64,
@@ -36,7 +37,7 @@ impl ApproxEq for Point {
         z: f64::EPSILON,
     };
     fn approx_eq(self, other: Self) -> bool {
-        Point::from((self - other).abs()) < Self::EPSILON
+        (self - other).abs().into_iter().all(|c| c < f64::EPSILON)
     }
 }
 
