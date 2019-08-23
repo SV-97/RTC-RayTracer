@@ -1,4 +1,5 @@
 mod approx_eq;
+mod pixels;
 mod point;
 mod vector;
 
