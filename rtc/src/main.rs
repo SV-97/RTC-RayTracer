@@ -1,7 +1,7 @@
 #[allow(dead_code)]
 mod primitives;
-mod pixels;
+mod examples;
 
 fn main() {
-    println!("Hello, world!");
+    let _ = examples::projectile::simulate_trajectory().map_err(|e| println!("{}", e));
 }
