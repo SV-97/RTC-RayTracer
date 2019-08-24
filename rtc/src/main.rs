@@ -1,8 +1,6 @@
-mod approx_eq;
-mod canvas;
+#[allow(dead_code)]
+mod primitives;
 mod pixels;
-mod point;
-mod vector;
 
 fn main() {
     println!("Hello, world!");

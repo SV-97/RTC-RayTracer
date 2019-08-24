@@ -1,5 +1,5 @@
 use std::convert::From;
-use std::ops::{Add, Sub};
+use std::ops::{Add, AddAssign, Sub};
 
 use super::approx_eq::ApproxEq;
 use super::vector::Vec3D;
@@ -48,6 +48,12 @@ impl Add<Vec3D> for Point {
     }
 }
 
+impl AddAssign<Vec3D> for Point {
+    fn add_assign(&mut self, other: Vec3D) {
+        *self = *self + other;
+    }
+}
+
 impl Sub<Vec3D> for Point {
     type Output = Self;
     fn sub(self, other: Vec3D) -> Self::Output {
@@ -90,6 +96,15 @@ mod tests {
         let p1 = Point::new(3.0, -2.0, 5.0);
         let v = Vec3D::new(-2.0, 3.0, 1.0);
         assert!((p1 + v).approx_eq(Point::new(1.0, 1.0, 6.0)));
+    }
+
+    #[test]
+    fn add_assign() {
+        let mut p1 = Point::new(3.0, -2.0, 5.0);
+        let v = Vec3D::new(-2.0, 3.0, 1.0);
+        p1 += v;
+        assert!(p1.approx_eq(Point::new(1.0, 1.0, 6.0)));
+
     }
 
     #[test]

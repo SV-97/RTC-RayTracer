@@ -1,4 +1,5 @@
 use std::ops::{Add, Mul, Sub};
+use std::convert::From;
 
 use super::approx_eq::ApproxEq;
 
@@ -48,6 +49,13 @@ impl Pixel {
 
     pub fn white() -> Self {
         Pixel::new_rgb(1.0, 1.0, 1.0)
+    }
+}
+
+impl From<(u8, u8, u8)> for Pixel {
+    fn from(bytes: (u8, u8, u8)) -> Self {
+        let factor = 255.0_f32.recip();
+        Pixel::new_rgb(factor * bytes.0 as f32, factor * bytes.1 as f32, factor * bytes.2 as f32)
     }
 }
 

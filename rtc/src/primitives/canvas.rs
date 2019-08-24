@@ -1,5 +1,4 @@
-use super::approx_eq::ApproxEq;
-use super::pixels::Pixel;
+use super::pixel::Pixel;
 
 use std::convert::TryInto;
 use std::f32;
@@ -7,8 +6,8 @@ use std::ops::{Index, IndexMut};
 
 pub struct Canvas {
     pixels: Vec<Pixel>,
-    width: usize,
-    height: usize,
+    pub width: usize,
+    pub height: usize,
 }
 
 impl Canvas {
@@ -94,7 +93,7 @@ impl Canvas {
 
     /// Return a PPM encoded version of the picture
     pub fn as_ppm(&self) -> String {
-        let mut header = format!("P3\n{} {}\n255\n", self.width, self.height);
+        let header = format!("P3\n{} {}\n255\n", self.width, self.height);
 
         let lines = self.iter_rows().fold(vec![], |mut buf, row| {
             let row_buf = row.fold(vec![], |mut row_buf, pixel| {
@@ -114,7 +113,7 @@ impl Canvas {
             .map(|s| split_long_lines(70, s))
             .map(|short_lines| short_lines.join("\n"))
             .collect::<Vec<String>>();
-        let mut data = length_verified_buf.join("\n");
+        let data = length_verified_buf.join("\n");
         format!("{}{}\n", header, data)
     }
 }
@@ -245,5 +244,11 @@ mod tests {
                 "123456789 abc defg"
             )
         );
+    }
+
+    fn end_in_newline() {
+        let c = Canvas::new(5, 3);
+        assert_eq!(c.as_ppm().chars().last(), Some('\n'));
+
     }
 }
