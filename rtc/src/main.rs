@@ -1,6 +1,8 @@
+extern crate num_traits;
+
+mod examples;
 #[allow(dead_code)]
 mod primitives;
-mod examples;
 mod utils;
 
 fn main() {

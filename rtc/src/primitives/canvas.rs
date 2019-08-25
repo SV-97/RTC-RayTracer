@@ -1,35 +1,33 @@
-
 use std::convert::TryInto;
 use std::f32;
-use std::ops::{Index, IndexMut};
 
-use crate::utils::{ clamp, split_long_lines };
+use crate::utils::*;
 
-use super::matrix::Matrix;
-use super::pixel::Pixel;
 use super::approx_eq::ApproxEq;
+use super::tmatrix::Matrix;
+use super::pixel::Pixel;
 
-pub type Canvas = Matrix<Pixel>;
+pub type Canvas<WIDTH, HEIGHT> = Matrix<Pixel, HEIGHT, WIDTH>;
 
-impl Canvas {
+impl<WIDTH: Nat, HEIGHT: Nat> Canvas<WIDTH, HEIGHT> {
     /// Draw a pixel to the canvas
     pub fn draw(&mut self, x: usize, y: usize, pixel: Pixel) -> Result<(), String> {
-        if x < self.width {
-            if y < self.height {
-                let i = self.as_one_dim(x, y);
+        if x < WIDTH::val() {
+            if y < HEIGHT::val() {
+                let i = Self::to_row_major(y, x);
                 self.data[i] = pixel;
                 Ok(())
             } else {
                 Err(format!(
                     "Tried accessing canvas out of bounds. Max y-index={}, actual index={}.",
-                    self.height - 1,
+                    HEIGHT::val() - 1,
                     y
                 ))
             }
         } else {
             Err(format!(
                 "Tried accessing canvas out of bounds. Max x-index={}, actual index={}.",
-                self.width - 1,
+                WIDTH::val() - 1,
                 x
             ))
         }
@@ -37,7 +35,7 @@ impl Canvas {
 
     /// Return a PPM encoded version of the picture
     pub fn as_ppm(&self) -> String {
-        let header = format!("P3\n{} {}\n255\n", self.width, self.height);
+        let header = format!("P3\n{} {}\n255\n", WIDTH::val(), HEIGHT::val());
 
         let lines = self.iter_rows().fold(vec![], |mut buf, row| {
             let row_buf = row.fold(vec![], |mut row_buf, pixel| {
@@ -75,9 +73,9 @@ mod tests {
 
     #[test]
     fn read_and_write() {
-        let mut c = Canvas::new(2, 2);
+        let mut c = Canvas::<N2, N2>::new();
         c[(0, 0)] = Pixel::white();
-        c[(1, 0)] = Pixel::green();
+        c[(0, 1)] = Pixel::green();
         c[(1, 1)] = Pixel::red();
         assert!(c.data[0].approx_eq(Pixel::white()));
         assert!(c.data[1].approx_eq(Pixel::green()));
@@ -87,7 +85,7 @@ mod tests {
 
     #[test]
     fn ppm_header() {
-        let c = Canvas::new(20, 10);
+        let c = Canvas::<N20, N10>::new();
         assert_eq!(
             &c.as_ppm().lines().take(3).collect::<Vec<_>>().join("\n"),
             "P3\n20 10\n255"
@@ -96,9 +94,9 @@ mod tests {
 
     #[test]
     fn iter_rows() {
-        let mut c = Canvas::new(2, 2);
+        let mut c = Canvas::<N2, N2>::new();
         c[(0, 0)] = Pixel::white();
-        c[(1, 0)] = Pixel::green();
+        c[(0, 1)] = Pixel::green();
         c[(1, 1)] = Pixel::red();
         let mut i = c.iter_rows();
         for p in c.iter_rows() {
@@ -116,16 +114,16 @@ mod tests {
     }
     #[test]
     fn ppm_data() {
-        let mut c = Canvas::new(2, 2);
+        let mut c = Canvas::<N2, N2>::new();
         c[(0, 0)] = Pixel::white() * 0.5;
         c[(1, 1)] = Pixel::red();
-        c[(1, 0)] = Pixel::white() * 10.0;
+        c[(0, 1)] = Pixel::white() * 10.0;
         let s = c.as_ppm();
         assert_eq!(&s, "P3\n2 2\n255\n128 128 128 255 255 255\n0 0 0 255 0 0\n");
     }
 
     fn end_in_newline() {
-        let c = Canvas::new(5, 3);
+        let c = Canvas::<N5, N3>::new();
         assert_eq!(c.as_ppm().chars().last(), Some('\n'));
     }
 }

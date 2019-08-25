@@ -1,5 +1,5 @@
-use std::ops::{Add, Mul, Sub};
 use std::convert::From;
+use std::ops::{Add, Mul, Sub};
 
 use super::approx_eq::ApproxEq;
 
@@ -55,7 +55,11 @@ impl Pixel {
 impl From<(u8, u8, u8)> for Pixel {
     fn from(bytes: (u8, u8, u8)) -> Self {
         let factor = 255.0_f32.recip();
-        Pixel::new_rgb(factor * bytes.0 as f32, factor * bytes.1 as f32, factor * bytes.2 as f32)
+        Pixel::new_rgb(
+            factor * f32::from(bytes.0),
+            factor * f32::from(bytes.1),
+            factor * f32::from(bytes.2),
+        )
     }
 }
 
@@ -96,14 +100,10 @@ impl Mul<f32> for Pixel {
     }
 }
 
-impl ApproxEq for Pixel {
-    const EPSILON: Self = Pixel {
-        r: f32::EPSILON,
-        g: f32::EPSILON,
-        b: f32::EPSILON,
-    };
+impl ApproxEq<f32> for Pixel {
+    const EPSILON: f32 = f32::EPSILON;
     fn approx_eq(self, other: Self) -> bool {
-        (self - other).abs().into_iter().all(|c| c < f32::EPSILON)
+        (self - other).abs().into_iter().all(|c| c < Self::EPSILON)
     }
 }
 

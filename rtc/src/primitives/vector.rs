@@ -100,14 +100,10 @@ impl From<Point> for Vec3D {
     }
 }
 
-impl ApproxEq for Vec3D {
-    const EPSILON: Self = Vec3D {
-        x: f64::EPSILON,
-        y: f64::EPSILON,
-        z: f64::EPSILON,
-    };
+impl ApproxEq<f64> for Vec3D {
+    const EPSILON: f64 = f64::EPSILON;
     fn approx_eq(self, other: Self) -> bool {
-        (self - other).abs().into_iter().all(|c| c < f64::EPSILON)
+        (self - other).abs().into_iter().all(|c| c < Self::EPSILON)
     }
 }
 

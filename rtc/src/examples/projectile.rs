@@ -1,28 +1,26 @@
-use crate::primitives::{
-    point::Point,
-    vector::Vec3D,
-    canvas::Canvas,
-    pixel::Pixel,
-    rendering::Rendering,
+use crate::{
+    utils::*,
+    primitives::{
+        canvas::Canvas, pixel::Pixel, point::Point, rendering::Rendering, vector::Vec3D,
+    },
 };
 
 /// Creates and image of a projectile simulation
 pub fn simulate_trajectory() -> std::io::Result<()> {
     let sim = Simulation::new(
-        Environment::new(
-            Vec3D::new(0.0, -0.1, 0.0),
-            Vec3D::new(-0.01, 0.0, 0.0)),
+        Environment::new(Vec3D::new(0.0, -0.1, 0.0), Vec3D::new(-0.01, 0.0, 0.0)),
         Projectile::new(
             Point::new(0.0, 1.0, 0.0),
-            Vec3D::new(1.0, 1.8, 0.0).unit() * 11.25),
-            );
-    let mut canvas = Canvas::new(900, 550);
-    let pen = Pixel::from((253, 150, 20));
+            Vec3D::new(1.0, 1.8, 0.0).unit() * 11.25,
+        ),
+    );
+    let mut canvas = Canvas::<N900, N550>::new();
+    let pen = Pixel::from((253, 150, 20)); // orange
     for point in sim.take_while(|p| p.position.y > 0.0) {
         let x = point.position.x.round() as usize;
-        let y = canvas.height - point.position.y.round() as usize;
-        for i in x-2..x+2 {
-            for j in y-2..y+2 {
+        let y = canvas.height() - point.position.y.round() as usize;
+        for i in x - 2..x + 2 {
+            for j in y - 2..y + 2 {
                 let _ = canvas.draw(i, j, pen).map_err(|e| println!("{}", e));
             }
         }
@@ -39,7 +37,7 @@ struct Projectile {
 
 impl Projectile {
     pub fn new(position: Point, velocity: Vec3D) -> Self {
-        Projectile { position, velocity, }
+        Projectile { position, velocity }
     }
 }
 
@@ -65,7 +63,7 @@ struct Simulation {
 }
 
 impl Simulation {
-    pub fn new( env: Environment, projectile: Projectile ) -> Self {
+    pub fn new(env: Environment, projectile: Projectile) -> Self {
         Simulation { env, projectile }
     }
 }

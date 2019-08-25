@@ -30,14 +30,10 @@ impl From<Vec3D> for Point {
     }
 }
 
-impl ApproxEq for Point {
-    const EPSILON: Self = Point {
-        x: f64::EPSILON,
-        y: f64::EPSILON,
-        z: f64::EPSILON,
-    };
+impl ApproxEq<f64> for Point {
+    const EPSILON: f64 = f64::EPSILON;
     fn approx_eq(self, other: Self) -> bool {
-        (self - other).abs().into_iter().all(|c| c < f64::EPSILON)
+        (self - other).abs().into_iter().all(|c| c < Self::EPSILON)
     }
 }
 
@@ -104,7 +100,6 @@ mod tests {
         let v = Vec3D::new(-2.0, 3.0, 1.0);
         p1 += v;
         assert!(p1.approx_eq(Point::new(1.0, 1.0, 6.0)));
-
     }
 
     #[test]

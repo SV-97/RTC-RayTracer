@@ -1,18 +1,19 @@
 use std::fs::File;
 use std::io::prelude::*;
 
+use crate::utils::*;
 use super::canvas::Canvas;
 
-pub struct Rendering {
+pub struct Rendering<HEIGHT: Nat, WIDTH: Nat> {
     name: String,
-    canvas: Canvas,
+    canvas: Canvas<HEIGHT, WIDTH>,
 }
 
-impl Rendering {
-    pub fn new(name: impl Into<String>, canvas: Canvas) -> Self {
-        Rendering { 
+impl<HEIGHT: Nat, WIDTH: Nat> Rendering<HEIGHT, WIDTH> {
+    pub fn new(name: impl Into<String>, canvas: Canvas<HEIGHT, WIDTH>) -> Self {
+        Rendering {
             name: name.into(),
-            canvas
+            canvas,
         }
     }
 
