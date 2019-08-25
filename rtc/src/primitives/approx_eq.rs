@@ -1,8 +1,11 @@
 /// Trait that provides equivalence for floating-point based types
-pub trait ApproxEq {
+pub trait ApproxEq<E = Self, Rhs = Self>
+where
+    E: Copy,
+{
     /// Maximum allowed error such that two instances are regarded as being equal.
-    const EPSILON: Self;
-    fn approx_eq(self, other: Self) -> bool;
+    const EPSILON: E;
+    fn approx_eq(self, other: Rhs) -> bool;
 }
 
 impl ApproxEq for f64 {

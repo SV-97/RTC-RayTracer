@@ -13,7 +13,7 @@ pub fn clamp<N: PartialOrd>(a: N, min: N, max: N) -> N {
 
 /// Split lines that are over `max_length' long into multiple lines.
 /// Breakes only at whitespace.
-pub fn split_long_lines(max_length: usize, s: &String) -> Vec<String> {
+pub fn split_long_lines(max_length: usize, s: &str) -> Vec<String> {
     let mut length = 0;
     let mut line_buf = vec![];
     let mut buf = s.split_whitespace().fold(vec![], |mut buf, segment| {
@@ -55,4 +55,42 @@ mod tests {
             )
         );
     }
+}
+
+pub trait Nat: Default {
+    fn val() -> usize;
+}
+
+/// Produces code like
+/// ```
+/// struct N1 {}
+/// impl Nat for N1 {
+///    fn val() -> usize {
+///        1
+///    }
+/// }
+/// ```
+/// Adapted from http://jadpole.github.io/rust/typechecked-matrix
+macro_rules! nat {
+    ( $( $name:ident => $val:expr ),* ) => {
+        $(
+        #[derive(Clone, Copy, Eq, PartialEq)]
+        pub struct $name;
+        impl Nat for $name {
+            fn val() -> usize { $val }
+        }
+        impl Default for $name {
+            fn default() -> Self { $name{} }
+        }
+        )*
+    }
+}
+
+nat! {
+    N1 => 1,
+    N2 => 2,
+    N3 => 3,
+    N4 => 4,
+    N5 => 5,
+    N6 => 6
 }
