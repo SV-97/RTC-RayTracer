@@ -1,9 +1,44 @@
-use std::ops::{Index, IndexMut};
+#![feature(const_generics)]
 
+use num_traits::Num;
+
+use std::fmt;
+use std::ops::{Index, IndexMut, Mul};
+
+use super::approx_eq::ApproxEq;
+
+// This should really use const generics, but they're not stable
+#[derive(Clone, PartialEq, PartialOrd)]
 pub struct Matrix<T> {
     pub data: Vec<T>,
     pub width: usize,
     pub height: usize,
+}
+
+impl<T: fmt::Debug> fmt::Debug for Matrix<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Matrix {}x{}", self.width, self.height)?;
+        for row in self.iter_rows() {
+            writeln!(f, "    {:?}", row.collect::<Vec<_>>())?;
+        }
+        Ok(())
+    }
+}
+
+#[macro_export]
+macro_rules! matrix {
+    ( $( $( $val:expr ),+ );* ) => {
+        {
+            use $crate::primitives::matrix::Matrix;
+            let data = [ $( [ $($val),+ ] ),* ];
+            let height = data.len();
+            let width = data[0].len();
+            let mut m = Matrix::new(width, height);
+            m.data = data.into_iter().flatten().map(|x| *x).collect::<Vec<_>>();
+            let m = m;
+            m
+        }
+    }
 }
 
 impl<T: Default + Clone> Matrix<T> {
@@ -100,15 +135,44 @@ impl<T> Index<(usize, usize)> for Matrix<T> {
 }
 
 impl<T> IndexMut<(usize, usize)> for Matrix<T> {
-    fn index_mut<'a>(&'a mut self, coords: (usize, usize)) -> &'a mut Self::Output {
+    fn index_mut(&mut self, coords: (usize, usize)) -> &mut Self::Output {
         let (x, y) = coords;
         let i = self.as_one_dim(x, y);
         &mut self.data[i]
     }
 }
 
+impl<T: ApproxEq + Copy> ApproxEq<T> for &Matrix<T> {
+    const EPSILON: T = T::EPSILON;
+    fn approx_eq(self, other: Self) -> bool {
+        self.iter().zip(other.iter()).all(|(l, r)| l.approx_eq(*r))
+    }
+}
+
+impl<T: Num + Default + Copy + std::iter::Sum<T>> Mul for Matrix<T> {
+    type Output = Option<Self>;
+
+    fn mul(self, other: Self) -> Self::Output {
+        if self.width == other.height {
+            let mut new = Matrix::new(self.height, other.width);
+            for (i, row) in self.iter_rows().enumerate() {
+                let row = row.collect::<Vec<_>>();
+                for (j, col) in other.iter_columns().enumerate() {
+                    new[(j, i)] = row.iter().zip(col).map(|(r, c)| **r * *c).sum();
+                }
+            }
+            Some(new)
+        } else {
+            None
+        }
+    }
+}
+
+/// NEXT UP SHOULD BE THE IDENTITY MATRIX
+
 #[cfg(test)]
 mod tests {
+    #[macro_use]
     use super::*;
 
     #[test]
@@ -142,5 +206,28 @@ mod tests {
         assert_eq!(row1.next().unwrap(), &4);
         assert_eq!(row2.next().unwrap(), &usize::default());
         assert_eq!(row2.next().unwrap(), &5);
+    }
+
+    #[test]
+    fn mul() {
+        let a = matrix![
+            1_isize, 2, 3, 4;
+            5, 6, 7, 8;
+            9, 8, 7, 6;
+            5, 4, 3, 2
+        ];
+        let b = matrix![
+            -2, 1, 2, 3;
+            3, 2, 1, -1;
+            4, 3, 6, 5;
+            1, 2, 7, 8
+        ];
+        let c = matrix![
+            20, 22, 50, 48;
+            44, 54, 114, 108;
+            40, 58, 110, 102;
+            16, 26, 46, 42
+        ];
+        assert_eq!(a * b, Some(c));
     }
 }
