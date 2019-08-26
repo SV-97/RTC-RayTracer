@@ -110,6 +110,18 @@ impl<T, M: Nat + Val, N: Nat + Val> Matrix<T, M, N> {
         self.data.iter()
     }
 
+    /// Iterate over all elements mutably
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.data.iter_mut()
+    }
+
+    pub fn iter_indexed(&self) -> impl Iterator<Item = (usize, usize, &T)> {
+        self.iter_rows()
+            .enumerate()
+            .map(|(i, iter)| iter.enumerate().map(move |(j, x)| (i, j, x)))
+            .flatten()
+    }
+
     /// Iterate over the ith row of the matrix
     pub fn iter_row(&self, i: usize) -> impl Iterator<Item = &T> {
         self.iter().skip(i * N::val()).take(N::val())
@@ -131,6 +143,19 @@ impl<T, M: Nat + Val, N: Nat + Val> Matrix<T, M, N> {
     }
 }
 
+impl<T: Copy, M: Nat + Val, N: Nat + Val> Matrix<T, M, N> {
+    pub fn transpose(&self) -> Matrix<T, N, M> {
+        let mut m = Matrix::new_uninitialized();
+        let mut v = Vec::with_capacity(M::val() * N::val());
+        for i in 0..M::val() {
+            for j in 0..N::val() {
+                v.push(self[(j, i)]);
+            }
+        }
+        m.data = v;
+        m
+    }
+}
 impl<T, M: Nat + Val, N: Nat + Val> fmt::Debug for Matrix<T, M, N>
 where
     T: fmt::Debug + Default + Clone,
@@ -237,7 +262,7 @@ where
     M: Nat + Val,
     N: Nat + Val,
 {
-    /// Remove the i'th row
+    /// Remove the j'th col
     pub fn remove_col(&self, j: usize) -> Matrix<T, M, N> {
         let mut m = Matrix::new_uninitialized();
         m.data = self
@@ -281,12 +306,91 @@ where
     }
 }
 
-impl<T: Num + Copy> Matrix<T, N2, N2> {
-    /// Calculate determinant of a 2x2 matrix.
-    pub fn det(&self) -> T {
+/// Yes this should be N-Dim (the N3 and N4 implementations are in fact that) but
+/// Rust won't accept my inductive definition and after wasting two hours this is
+/// just became a trait and got seperate implementations for the sizes I need.
+trait Determinant<T, M> {
+    /// Calculate the minor(determinant of the submatrix) of a MxM matrix at (i,j)
+    fn minor(&self, i: usize, j: usize) -> T;
+    /// Calculate the cofactor of a MxM matrix at (i, j)
+    fn cofactor(&self, i: usize, j: usize) -> T;
+    /// Calculate the determinant of the matrix
+    fn det(&self) -> T;
+}
+
+impl<T: Num + Copy> Determinant<T, N2> for Matrix<T, N2, N2> {
+    fn minor(&self, _i: usize, _j: usize) -> T {
+        unimplemented!()
+    }
+    fn cofactor(&self, _i: usize, _j: usize) -> T {
+        unimplemented!()
+    }
+    fn det(&self) -> T {
         match self.data[..] {
             [a, b, c, d] => a * d - b * c,
             _ => unreachable!(),
+        }
+    }
+}
+
+impl<T: Num + Copy + Signed + std::iter::Sum> Determinant<T, N3> for Matrix<T, N3, N3> {
+    fn minor(&self, i: usize, j: usize) -> T {
+        self.submatrix(i, j).det()
+    }
+    fn cofactor(&self, i: usize, j: usize) -> T {
+        if (i + j).is_odd() {
+            -T::one() * self.minor(i, j)
+        } else {
+            self.minor(i, j)
+        }
+    }
+    fn det(&self) -> T {
+        match self.data[..] {
+            [a, b, c, d] => a * d - b * c,
+            _ => (0..self.height())
+                .map(|j| self[(0, j)] * self.cofactor(0, j))
+                .sum(),
+        }
+    }
+}
+
+impl<T: Num + Copy + Signed + std::iter::Sum> Determinant<T, N4> for Matrix<T, N4, N4> {
+    /// Calculate the minor(determinant of the submatrix) of a 4x4 matrix at (i,j)
+    fn minor(&self, i: usize, j: usize) -> T {
+        self.submatrix(i, j).det()
+    }
+    /// Calculate the cofactor of a 4x4 matrix at (i, j)
+    fn cofactor(&self, i: usize, j: usize) -> T {
+        if (i + j).is_odd() {
+            -T::one() * self.minor(i, j)
+        } else {
+            self.minor(i, j)
+        }
+    }
+    fn det(&self) -> T {
+        match self.data[..] {
+            [a, b, c, d] => a * d - b * c,
+            _ => (0..self.height())
+                .map(|j| self[(0, j)] * self.cofactor(0, j))
+                .sum(),
+        }
+    }
+}
+
+impl<T: Num + Copy + Signed + std::iter::Sum + NumAssignOps> Matrix<T, N4, N4> {
+    fn invert(&self) -> Option<Self> {
+        let det = self.det();
+        if det == T::zero() {
+            None
+        } else {
+            let mut m = Self::new_uninitialized();
+            m.data = self
+                .iter_indexed()
+                .map(|(i, j, _)| self.cofactor(i, j))
+                .collect::<Vec<_>>();
+            let mut m2 = m.transpose();
+            let _ = m2.iter_mut().map(|x| *x /= det).collect::<Vec<_>>();
+            Some(m2)
         }
     }
 }
@@ -455,6 +559,28 @@ mod tests {
             {-3} 2
         ];
         assert_eq!(a.det(), 17);
+
+        let b = matrix![ N3, N3 =>
+            1, 2, 6;
+            -5, 8, -4;
+            2, 6, 4
+        ];
+        assert_eq!(b.cofactor(0, 0), 56);
+        assert_eq!(b.cofactor(0, 1), 12);
+        assert_eq!(b.cofactor(0, 2), -46);
+        assert_eq!(b.det(), -196);
+
+        let c = matrix![ N4, N4 =>
+            -2, -8, 3, 5;
+            -3, 1, 7, 3;
+            1, 2, -9, 6;
+            -6, 7, 7, -9
+        ];
+        assert_eq!(c.cofactor(0, 0), 690);
+        assert_eq!(c.cofactor(0, 1), 447);
+        assert_eq!(c.cofactor(0, 2), 210);
+        assert_eq!(c.cofactor(0, 3), 51);
+        assert_eq!(c.det(), -4071);
     }
 
     #[test]
@@ -526,5 +652,84 @@ mod tests {
                 -7, -1, 1
             ]
         );
+    }
+
+    #[test]
+    fn minor() {
+        let a = matrix![ N3, N3 =>
+            3, 5, 0;
+            2, -1, -7;
+            6, -1, 5
+        ];
+        let b = a.submatrix(1, 0);
+        assert_eq!(a.minor(1, 0), 25);
+        assert_eq!(a.minor(1, 0), b.det());
+    }
+
+    #[test]
+    fn invert() {
+        let a = matrix![ N4, N4 =>
+            6, 4, 4, 4;
+            5, 5, 7, 6;
+            4, -9, 3, -7;
+            9, 1, 7, -6
+        ];
+        assert_eq!(a.det(), -2120);
+        assert!(a.invert().is_some());
+
+        let b = matrix![ N4, N4 =>
+            -4.,  2., -2., -3.;
+             9.,  6.,  2.,  6.;
+             0., -5.,  1., -5.;
+             0.,  0.,  0.,  0.
+        ];
+        assert_eq!(b.det(), 0.0);
+        assert!(b.invert().is_none());
+
+        let c = matrix![ N4, N4 =>
+            -5.,  2.,  6., -8.;
+             1., -5.,  1.,  8.;
+             7.,  7., -6., -7.;
+             1., -3.,  7.,  4.
+        ];
+        let c_inv = matrix![ N4, N4 =>
+             0.21805,  0.45113,  0.24060, -0.04511;
+            -0.80827, -1.45677, -0.44361,  0.52068;
+            -0.07895, -0.22368, -0.05263,  0.19737;
+            -0.52256, -0.81391, -0.30075,  0.30639
+        ];
+        assert!(c.det().approx_eq(532.0));
+        assert!(c.cofactor(2, 3).approx_eq(-160.0));
+        dbg!(c_inv[(3, 2)], -160.0 / 532.0);
+        assert!(c_inv[(3, 2)].approx_eq(-160.0 / 532.0));
+        assert!(c.cofactor(3, 2).approx_eq(105.0));
+        assert!(c_inv[(2, 3)].approx_eq(105.0 / 532.0));
+        assert!(c.invert().unwrap().approx_eq(&c_inv));
+
+        let d = matrix![ N4, N4 =>
+             8., -5.,  9.,  2.;
+             7.,  5.,  6.,  1.;
+            -6.,  0.,  9.,  6.;
+            -3.,  0., -9., -4.
+        ];
+        assert!(d.invert().unwrap().approx_eq(&matrix![ N4, N4 =>
+            -0.15385, -0.15385, -0.28205, -0.53846;
+            -0.07692,  0.12308,  0.02564,  0.03077;
+             0.35897,  0.35897,  0.43590,  0.92308;
+            -0.69231, -0.69231, -0.76923, -1.92308
+        ]));
+
+        let e = matrix![ N4, N4 =>
+             9.,  3.,  0.,  9.;
+            -5., -2., -6., -3.;
+            -4.,  9.,  6.,  4.;
+            -7.,  6.,  6.,  2.
+        ];
+        assert!(e.invert().unwrap().approx_eq(&matrix![ N4, N4 =>
+            -0.04074, -0.07778,  0.14444, -0.22222;
+            -0.07778,  0.03333,  0.36667, -0.33333;
+            -0.02901, -0.14630, -0.10926,  0.12963;
+             0.17778,  0.06667, -0.26667,  0.33333
+        ]));
     }
 }
