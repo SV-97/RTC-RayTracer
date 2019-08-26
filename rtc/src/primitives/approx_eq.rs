@@ -9,14 +9,14 @@ where
 }
 
 impl ApproxEq for f64 {
-    const EPSILON: Self = 0.1e-10;
+    const EPSILON: Self = 0.1e-4;
     fn approx_eq(self, other: Self) -> bool {
         (self - other).abs() < Self::EPSILON
     }
 }
 
 impl ApproxEq for f32 {
-    const EPSILON: Self = 0.1e-5;
+    const EPSILON: Self = 0.1e-4;
     fn approx_eq(self, other: Self) -> bool {
         (self - other).abs() < Self::EPSILON
     }

@@ -3,6 +3,8 @@
 // values(Or bits) to build a number system of types from what I can
 // tell.
 
+// Also see the peano crate for a more in depths (in some regards) implementation of this.
+
 use std::fmt;
 use std::marker::PhantomData;
 
