@@ -1,8 +1,8 @@
 use std::fs::File;
 use std::io::prelude::*;
 
-use crate::utils::typelevel_nums::*;
 use super::canvas::Canvas;
+use crate::utils::typelevel_nums::*;
 
 pub struct Rendering<HEIGHT: Nat, WIDTH: Nat> {
     name: String,

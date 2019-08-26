@@ -1,8 +1,6 @@
 use crate::{
+    primitives::{canvas::Canvas, pixel::Pixel, point::Point, rendering::Rendering, vector::Vec3D},
     utils::typelevel_nums::*,
-    primitives::{
-        canvas::Canvas, pixel::Pixel, point::Point, rendering::Rendering, vector::Vec3D,
-    },
 };
 
 /// Creates and image of a projectile simulation

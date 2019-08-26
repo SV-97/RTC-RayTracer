@@ -1,5 +1,10 @@
-use std::marker::PhantomData;
+// TODO: Maybe model this after something like typenum at some point to bring
+// down compile times. Typenum uses essentially a type level list of
+// values(Or bits) to build a number system of types from what I can
+// tell.
+
 use std::fmt;
+use std::marker::PhantomData;
 
 /// The mathematical set Z
 //pub trait Int {}
@@ -259,7 +264,7 @@ mod test {
 
     #[test]
     fn pow() {
-        // assert_eq!(<N0 as Pow<N3>>::Output::val(), 0); // breaks currently
+        // assert_eq!(<N0 as Pow<N3>>::Output::val(), 0); // FIXME breaks currently, fix this
         assert_eq!(<N5 as Pow<N0>>::Output::val(), 1);
         assert_eq!(<N2 as Pow<N4>>::Output::val(), 16);
     }

@@ -4,8 +4,8 @@ use std::f32;
 use crate::utils::{clamp, split_long_lines, typelevel_nums::*};
 
 use super::approx_eq::ApproxEq;
-use super::tmatrix::Matrix;
 use super::pixel::Pixel;
+use super::tmatrix::Matrix;
 
 pub type Canvas<WIDTH, HEIGHT> = Matrix<Pixel, HEIGHT, WIDTH>;
 
