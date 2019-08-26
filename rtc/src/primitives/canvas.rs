@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 use std::f32;
 
-use crate::utils::*;
+use crate::utils::{clamp, split_long_lines, typelevel_nums::*};
 
 use super::approx_eq::ApproxEq;
 use super::tmatrix::Matrix;
@@ -9,7 +9,7 @@ use super::pixel::Pixel;
 
 pub type Canvas<WIDTH, HEIGHT> = Matrix<Pixel, HEIGHT, WIDTH>;
 
-impl<WIDTH: Nat, HEIGHT: Nat> Canvas<WIDTH, HEIGHT> {
+impl<WIDTH: Nat + Val, HEIGHT: Nat + Val> Canvas<WIDTH, HEIGHT> {
     /// Draw a pixel to the canvas
     pub fn draw(&mut self, x: usize, y: usize, pixel: Pixel) -> Result<(), String> {
         if x < WIDTH::val() {

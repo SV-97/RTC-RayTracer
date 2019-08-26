@@ -2,8 +2,9 @@ use num_traits::Num;
 
 use std::fmt;
 use std::ops::{Index, IndexMut, Mul};
+use std::marker::PhantomData;
 
-use crate::utils::*;
+use crate::utils::typelevel_nums::*;
 
 use super::approx_eq::ApproxEq;
 
@@ -15,8 +16,8 @@ use super::approx_eq::ApproxEq;
 /// 8 7 6
 #[derive(Clone, PartialEq, PartialOrd)]
 pub struct Matrix<T, M: Nat, N: Nat> {
-    m: M,
-    n: N,
+    _m: PhantomData<M>,
+    _n: PhantomData<N>,
     pub data: Vec<T>,
 }
 
@@ -68,23 +69,23 @@ macro_rules! matrix {
     }
 }
 
-impl<T: Default + Clone, M: Nat, N: Nat> Matrix<T, M, N> {
+impl<T: Default + Clone, M: Nat + Val, N: Nat + Val> Matrix<T, M, N> {
     pub fn new() -> Self {
         Matrix {
             data: vec![Default::default(); M::val() * N::val()],
-            m: M::default(),
-            n: N::default(),
+            _m: PhantomData,
+            _n: PhantomData,
         }
     }
 }
 
-impl<T, M: Nat, N: Nat> Matrix<T, M, N> {
+impl<T, M: Nat + Val, N: Nat + Val> Matrix<T, M, N> {
     /// Create a new matrix with uninitialized vector
     pub fn new_uninitialized() -> Self {
         Matrix {
             data: vec![],
-            m: M::default(),
-            n: N::default(),
+            _m: PhantomData,
+            _n: PhantomData,
         }
     }
 
@@ -130,16 +131,8 @@ impl<T, M: Nat, N: Nat> Matrix<T, M, N> {
     }
 }
 
-impl<T, M, N> Matrix<T, M, N>
-where
-    T: Default,
-    M: Nat,
-    N: Nat
-    {
-        
-    }
 
-impl<T, M: Nat, N: Nat> fmt::Debug for Matrix<T, M, N>
+impl<T, M: Nat + Val, N: Nat + Val> fmt::Debug for Matrix<T, M, N>
 where
     T: fmt::Debug + Default + Clone,
 {
@@ -152,7 +145,7 @@ where
     }
 }
 
-impl<T, M: Nat, N: Nat> Index<(usize, usize)> for Matrix<T, M, N> {
+impl<T, M: Nat + Val, N: Nat + Val> Index<(usize, usize)> for Matrix<T, M, N> {
     type Output = T;
 
     fn index(&self, coords: (usize, usize)) -> &Self::Output {
@@ -161,14 +154,14 @@ impl<T, M: Nat, N: Nat> Index<(usize, usize)> for Matrix<T, M, N> {
     }
 }
 
-impl<T, M: Nat, N: Nat> IndexMut<(usize, usize)> for Matrix<T, M, N> {
+impl<T, M: Nat + Val, N: Nat + Val> IndexMut<(usize, usize)> for Matrix<T, M, N> {
     fn index_mut(&mut self, coords: (usize, usize)) -> &mut Self::Output {
         let (i, j) = coords;
         &mut self.data[Self::to_row_major(i, j)]
     }
 }
 
-impl<T: ApproxEq + Copy, M: Nat, N: Nat> ApproxEq<T> for &Matrix<T, M, N> {
+impl<T: ApproxEq + Copy, M: Nat + Val, N: Nat + Val> ApproxEq<T> for &Matrix<T, M, N> {
     const EPSILON: T = T::EPSILON;
     fn approx_eq(self, other: Self) -> bool {
         self.iter().zip(other.iter()).all(|(l, r)| l.approx_eq(*r))
@@ -179,9 +172,9 @@ impl<T: ApproxEq + Copy, M: Nat, N: Nat> ApproxEq<T> for &Matrix<T, M, N> {
 impl<T, MA, N, NB> Mul<Matrix<T, N, NB>> for Matrix<T, MA, N>
 where
     T: Num + Default + Copy + std::iter::Sum<T> + fmt::Debug,
-    MA: Nat,
-    N: Nat,
-    NB: Nat,
+    MA: Nat + Val,
+    N: Nat + Val,
+    NB: Nat + Val,
 {
     type Output = Matrix<T, MA, NB>;
 

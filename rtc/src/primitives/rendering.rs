@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::prelude::*;
 
-use crate::utils::*;
+use crate::utils::typelevel_nums::*;
 use super::canvas::Canvas;
 
 pub struct Rendering<HEIGHT: Nat, WIDTH: Nat> {
@@ -9,7 +9,7 @@ pub struct Rendering<HEIGHT: Nat, WIDTH: Nat> {
     canvas: Canvas<HEIGHT, WIDTH>,
 }
 
-impl<HEIGHT: Nat, WIDTH: Nat> Rendering<HEIGHT, WIDTH> {
+impl<HEIGHT: Nat + Val, WIDTH: Nat + Val> Rendering<HEIGHT, WIDTH> {
     pub fn new(name: impl Into<String>, canvas: Canvas<HEIGHT, WIDTH>) -> Self {
         Rendering {
             name: name.into(),

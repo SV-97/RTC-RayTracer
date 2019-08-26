@@ -1,3 +1,4 @@
+#![recursion_limit = "2048"]
 extern crate num_traits;
 
 mod examples;

@@ -1,5 +1,5 @@
 use crate::{
-    utils::*,
+    utils::typelevel_nums::*,
     primitives::{
         canvas::Canvas, pixel::Pixel, point::Point, rendering::Rendering, vector::Vec3D,
     },
@@ -14,7 +14,7 @@ pub fn simulate_trajectory() -> std::io::Result<()> {
             Vec3D::new(1.0, 1.8, 0.0).unit() * 11.25,
         ),
     );
-    let mut canvas = Canvas::<N900, N550>::new();
+    let mut canvas = Canvas::<N900, <N500 as Add<N50>>::Output>::new();
     let pen = Pixel::from((253, 150, 20)); // orange
     for point in sim.take_while(|p| p.position.y > 0.0) {
         let x = point.position.x.round() as usize;
