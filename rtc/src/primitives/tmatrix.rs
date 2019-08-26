@@ -1,4 +1,5 @@
-use num_traits::{Num, One, Zero};
+use num::Integer;
+use num_traits::{Num, NumAssignOps, One, Signed, Zero};
 
 use std::fmt;
 use std::marker::PhantomData;
