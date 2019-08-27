@@ -3,7 +3,7 @@ use crate::{
         canvas::Canvas,
         pixel::Pixel,
         rendering::Rendering,
-        vector::{point, vec3, Point, Vec3D},
+        vector::{point, vector, Point, Vec3D},
     },
     utils::typelevel_nums::*,
 };
@@ -11,8 +11,8 @@ use crate::{
 /// Creates and image of a projectile simulation
 pub fn simulate_trajectory() -> std::io::Result<()> {
     let sim = Simulation::new(
-        Environment::new(vec3(0.0, -0.1, 0.0), vec3(-0.01, 0.0, 0.0)),
-        Projectile::new(point(0.0, 1.0, 0.0), vec3(1.0, 1.8, 0.0).unit() * 11.25),
+        Environment::new(vector(0.0, -0.1, 0.0), vector(-0.01, 0.0, 0.0)),
+        Projectile::new(point(0.0, 1.0, 0.0), vector(1.0, 1.8, 0.0).unit() * 11.25),
     );
     let mut canvas = Canvas::<N900, <N500 as Add<N50>>::Output>::new();
     let pen = Pixel::from((253, 150, 20)); // orange
@@ -21,7 +21,7 @@ pub fn simulate_trajectory() -> std::io::Result<()> {
         let y = canvas.height() - point.position.y().round() as usize;
         for i in x - 2..x + 2 {
             for j in y - 2..y + 2 {
-                let _ = canvas.draw(i, j, pen).map_err(|e| println!("{}", e));
+                let _ = canvas.draw(i, j, pen).map_err(|_| ());
             }
         }
     }

@@ -21,7 +21,7 @@ macro_rules! vec4 {
 }
 
 /// Construct a new vector in 3D space
-pub fn vec3<T: Num>(x: T, y: T, z: T) -> Vec4D<T> {
+pub fn vector<T: Num>(x: T, y: T, z: T) -> Vec4D<T> {
     vec4![x, y, z, T::zero()]
 }
 
@@ -57,7 +57,7 @@ impl<T: Num + Copy + Default + std::iter::Sum<T>> Vec4D<T> {
 
     /// Cross product between two vectors
     pub fn cross(self, other: Self) -> Self {
-        vec3(
+        vector(
             self.y() * other.z() - self.z() * other.y(),
             self.z() * other.x() - self.x() * other.z(),
             self.x() * other.y() - self.y() * other.x(),
@@ -66,60 +66,77 @@ impl<T: Num + Copy + Default + std::iter::Sum<T>> Vec4D<T> {
 
     /// x direction unit vector
     pub fn unit_x() -> Self {
-        vec3(T::one(), T::zero(), T::zero())
+        vector(T::one(), T::zero(), T::zero())
     }
     /// y direction unit vector
     pub fn unit_y() -> Self {
-        vec3(T::zero(), T::one(), T::zero())
+        vector(T::zero(), T::one(), T::zero())
     }
 
     /// z direction unit vector
     pub fn unit_z() -> Self {
-        vec3(T::zero(), T::zero(), T::one())
+        vector(T::zero(), T::zero(), T::one())
     }
 }
 
 #[cfg(test)]
 mod tests {
+    #[macro_use]
     use super::*;
     use crate::primitives::approx_eq::ApproxEq;
 
     #[test]
     fn scalar_prod() {
-        let v1 = vec3(1.0, -2.0, 3.0);
-        let v2 = vec3(5.0, 8.2, -3.1);
+        let v1 = vector(1.0, -2.0, 3.0);
+        let v2 = vector(5.0, 8.2, -3.1);
         assert!(v1.scalar_prod(v2).approx_eq(5.0 - 16.4 - 9.3));
-        let v1 = vec3(1.0, -2.0, 3.0);
-        let v2 = vec3(5.0, 8.2, -3.1);
+        let v1 = vector(1.0, -2.0, 3.0);
+        let v2 = vector(5.0, 8.2, -3.1);
         assert!(v1.scalar_prod(v2).approx_eq(5.0 - 16.4 - 9.3));
     }
 
     #[test]
     fn mag() {
-        assert!(1.0.approx_eq(vec3(1.0, 0.0, 0.0).mag()));
-        assert!(1.0.approx_eq(vec3(0.0, 1.0, 0.0).mag()));
-        assert!(1.0.approx_eq(vec3(0.0, 0.0, 1.0).mag()));
-        assert!(1.0.approx_eq(vec3(0.0, 0.0, -1.0).mag()));
-        assert!((2.0_f64.sqrt()).approx_eq(vec3(1.0, 1.0, 0.0).mag()));
-        assert!((3.0_f64.sqrt()).approx_eq(vec3(1.0, 1.0, 1.0).mag()));
-        assert!(5.0.approx_eq(vec3(5.0, 0.0, 0.0).mag()));
+        assert!(1.0.approx_eq(vector(1.0, 0.0, 0.0).mag()));
+        assert!(1.0.approx_eq(vector(0.0, 1.0, 0.0).mag()));
+        assert!(1.0.approx_eq(vector(0.0, 0.0, 1.0).mag()));
+        assert!(1.0.approx_eq(vector(0.0, 0.0, -1.0).mag()));
+        assert!((2.0_f64.sqrt()).approx_eq(vector(1.0, 1.0, 0.0).mag()));
+        assert!((3.0_f64.sqrt()).approx_eq(vector(1.0, 1.0, 1.0).mag()));
+        assert!(5.0.approx_eq(vector(5.0, 0.0, 0.0).mag()));
     }
 
     #[test]
     fn unit() {
-        assert!(vec3(1.0, 0.0, 0.0).approx_eq(&vec3(4.0, 0.0, 0.0).unit()));
-        assert!(vec3(
+        assert!(vector(1.0, 0.0, 0.0).approx_eq(&vector(4.0, 0.0, 0.0).unit()));
+        assert!(vector(
             1.0 / 14.0_f64.sqrt(),
             2.0 / 14.0_f64.sqrt(),
             3.0 / 14.0_f64.sqrt()
         )
-        .approx_eq(&vec3(1.0, 2.0, 3.0).unit()));
-        assert!(1.0_f64.approx_eq(vec3(1.0, 2.0, 3.0).unit().mag()));
+        .approx_eq(&vector(1.0, 2.0, 3.0).unit()));
+        assert!(1.0_f64.approx_eq(vector(1.0, 2.0, 3.0).unit().mag()));
     }
 
     #[test]
     fn cross() {
         assert!(Vec4D::<f64>::unit_z().approx_eq(&Vec4D::unit_x().cross(Vec4D::unit_y())));
         assert!(Vec4D::<f32>::unit_z().approx_eq(&Vec4D::unit_x().cross(Vec4D::unit_y())));
+    }
+
+    #[test]
+    fn mul() {
+        let a = matrix![ N4, N4 =>
+            1 0 0 4;
+            0 1 0 8;
+            0 0 1 6;
+            0 0 0 1
+        ];
+        let b = point(2, 3, 4);
+        let c = vec4![6, 11, 10, 1];
+        assert_eq!(a.clone() * b, c);
+        let b = vector(2, 3, 4);
+        let c = vec4![2, 3, 4, 0];
+        assert_eq!(a * b, c);
     }
 }
