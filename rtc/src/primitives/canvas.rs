@@ -9,6 +9,26 @@ use super::tmatrix::Matrix;
 pub type Canvas<WIDTH, HEIGHT> = Matrix<Pixel, HEIGHT, WIDTH>;
 
 impl<WIDTH: Nat + Val, HEIGHT: Nat + Val> Canvas<WIDTH, HEIGHT> {
+    pub fn draw_block(
+        &mut self,
+        x: usize,
+        y: usize,
+        half_width: usize,
+        half_height: usize,
+        pixel: Pixel,
+    ) -> Vec<String> {
+        let mut errs = vec![];
+        for i in y - half_height..y + half_height {
+            for j in x - half_width..x + half_width {
+                match self.draw(i, j, pixel) {
+                    Err(e) => errs.push(e),
+                    _ => (),
+                }
+            }
+        }
+        errs
+    }
+
     /// Draw a pixel to the canvas
     pub fn draw(&mut self, x: usize, y: usize, pixel: Pixel) -> Result<(), String> {
         if x < WIDTH::val() {
