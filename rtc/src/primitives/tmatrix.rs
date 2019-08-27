@@ -1,9 +1,10 @@
 use num::Integer;
 use num_traits::{Num, NumAssignOps, One, Signed, Zero};
 
+use std::convert::From;
 use std::fmt;
 use std::marker::PhantomData;
-use std::ops::{Index, IndexMut, Mul};
+use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Neg, Sub};
 
 use crate::utils::typelevel_nums::*;
 
@@ -65,6 +66,22 @@ macro_rules! matrix {
             m.data = flattened;
             let m = m;
             m}
+        }
+    }
+}
+
+impl<T, M, N> From<Vec<T>> for Matrix<T, M, N>
+where
+    T: Num + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    fn from(v: Vec<T>) -> Self {
+        assert_eq!(v.len(), M::val() * N::val());
+        Matrix {
+            data: v,
+            _m: PhantomData,
+            _n: PhantomData,
         }
     }
 }
@@ -156,6 +173,93 @@ impl<T: Copy, M: Nat + Val, N: Nat + Val> Matrix<T, M, N> {
         m
     }
 }
+
+impl<T, M, N> Add for Matrix<T, M, N>
+where
+    T: Num + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    type Output = Self;
+    fn add(self, other: Self) -> Self::Output {
+        Matrix::from(
+            self.iter()
+                .zip(other.iter())
+                .map(|(l, r)| *l + *r)
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+impl<T, M, N> Sub for Matrix<T, M, N>
+where
+    T: Num + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    type Output = Self;
+    fn sub(self, other: Self) -> Self::Output {
+        Matrix::from(
+            self.iter()
+                .zip(other.iter())
+                .map(|(l, r)| *l - *r)
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+impl<T, M, N> AddAssign for Matrix<T, M, N>
+where
+    T: Num + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    fn add_assign(&mut self, other: Self) {
+        *self = Matrix::from(
+            self.iter()
+                .zip(other.iter())
+                .map(|(l, r)| *l + *r)
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+impl<T, M, N> Neg for Matrix<T, M, N>
+where
+    T: Signed + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    type Output = Self;
+    fn neg(self) -> Self::Output {
+        Matrix::from(self.iter().map(|x| Neg::neg(*x)).collect::<Vec<_>>())
+    }
+}
+
+impl<T, M, N> Mul<T> for Matrix<T, M, N>
+where
+    T: Num + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    type Output = Self;
+    fn mul(self, other: T) -> Self::Output {
+        Matrix::from(self.iter().map(|x| *x * other).collect::<Vec<_>>())
+    }
+}
+
+impl<T, M, N> Div<T> for Matrix<T, M, N>
+where
+    T: Num + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    type Output = Self;
+    fn div(self, other: T) -> Self::Output {
+        Matrix::from(self.iter().map(|x| *x / other).collect::<Vec<_>>())
+    }
+}
+
 impl<T, M: Nat + Val, N: Nat + Val> fmt::Debug for Matrix<T, M, N>
 where
     T: fmt::Debug + Default + Clone,
@@ -207,14 +311,7 @@ where
         for (i, row) in self.iter_rows().enumerate() {
             let row = row.collect::<Vec<_>>();
             for (j, col) in other.iter_cols().enumerate() {
-                new[(i, j)] = row
-                    .iter()
-                    .zip(col)
-                    .map(|(r, c)| {
-                        println!("{:?}*{:?}", r, c);
-                        **r * *c
-                    })
-                    .sum();
+                new[(i, j)] = row.iter().zip(col).map(|(r, c)| **r * *c).sum();
             }
         }
         new
@@ -700,7 +797,6 @@ mod tests {
         ];
         assert!(c.det().approx_eq(532.0));
         assert!(c.cofactor(2, 3).approx_eq(-160.0));
-        dbg!(c_inv[(3, 2)], -160.0 / 532.0);
         assert!(c_inv[(3, 2)].approx_eq(-160.0 / 532.0));
         assert!(c.cofactor(3, 2).approx_eq(105.0));
         assert!(c_inv[(2, 3)].approx_eq(105.0 / 532.0));
@@ -731,5 +827,140 @@ mod tests {
             -0.02901, -0.14630, -0.10926,  0.12963;
              0.17778,  0.06667, -0.26667,  0.33333
         ]));
+    }
+
+    #[test]
+    fn inverse_multiplication() {
+        let a = matrix![ N4, N4 =>
+             3., -9.,  7.,  3.;
+             3., -8.,  2., -9.;
+            -4.,  4.,  4.,  1.;
+            -6.,  5., -1.,  1.
+        ];
+        let b = matrix![ N4, N4 =>
+            8.,  2., 2., 2.;
+            3., -1., 7., 0.;
+            7.,  0., 5., 4.;
+            6., -2., 0., 5.
+        ];
+        assert!((a.clone() * b.clone() * b.invert().unwrap()).approx_eq(&a));
+    }
+
+    #[test]
+    fn add() {
+        let a = matrix![ N3, N2 =>
+            1 3;
+            6 2;
+            9 0
+        ];
+        let b = matrix![ N3, N2 =>
+            0 0;
+            4 2;
+            7 8
+        ];
+        assert_eq!(
+            a + b,
+            matrix![ N3, N2 =>
+                1 3;
+                10 4;
+                16 8
+            ]
+        );
+    }
+
+    #[test]
+    fn add_assign() {
+        let mut a = matrix![ N3, N2 =>
+            1 3;
+            6 2;
+            9 0
+        ];
+        let b = matrix![ N3, N2 =>
+            0 0;
+            4 2;
+            7 8
+        ];
+        a += b;
+        assert_eq!(
+            a,
+            matrix![ N3, N2 =>
+                1 3;
+                10 4;
+                16 8
+            ]
+        );
+    }
+
+    #[test]
+    fn sub() {
+        let a = matrix![ N3, N2 =>
+            1 3;
+            6 2;
+            9 0
+        ];
+        let b = matrix![ N3, N2 =>
+            0 0;
+            4 2;
+            7 8
+        ];
+        assert_eq!(
+            a - b,
+            matrix![ N3, N2 =>
+                 1,  3;
+                 2,  0;
+                 2, -8
+            ]
+        );
+    }
+
+    #[test]
+    fn neg() {
+        let a = matrix![ N3, N2 =>
+            1 3;
+            6 2;
+            9 0
+        ];
+        assert_eq!(
+            -a,
+            matrix![ N3, N2 =>
+                -1, -3;
+                -6, -2;
+                -9,  0
+            ]
+        );
+    }
+
+    #[test]
+    fn mul_scalar() {
+        let a = matrix![ N3, N2 =>
+            1 3;
+            6 2;
+            9 0
+        ];
+        assert_eq!(
+            a * 5,
+            matrix![ N3, N2 =>
+                5,  15;
+                30, 10;
+                45,  0
+            ]
+        );
+    }
+
+    #[test]
+    fn div_scalar() {
+        let a = matrix![ N3, N2 =>
+            15 3;
+            6 18;
+            9 0
+        ];
+        assert_eq!(
+            a / 3,
+            matrix![ N3, N2 =>
+                5,  1;
+                2,  6;
+                3,  0
+            ]
+        );
     }
 }
