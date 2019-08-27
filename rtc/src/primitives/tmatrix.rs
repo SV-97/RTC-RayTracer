@@ -498,7 +498,7 @@ impl<T: Num + Copy + Signed + std::iter::Sum> Determinant<T, N4> for Matrix<T, N
 }
 
 impl<T: Num + Copy + Signed + std::iter::Sum + NumAssignOps> Matrix<T, N4, N4> {
-    fn invert(&self) -> Option<Self> {
+    pub fn invert(&self) -> Option<Self> {
         let det = self.det();
         if det == T::zero() {
             None
@@ -665,6 +665,20 @@ mod tests {
             44 54 114 108;
             40 58 110 102
         ];
+        assert_eq!(a * b, c);
+        let a = matrix![ N4, N4 =>
+            1 2 3 4;
+            5 6 7 8;
+            9 8 7 6;
+            5 4 3 2
+        ];
+        let b = matrix![ N4, N1 =>
+            2;
+            3;
+            4;
+            1
+        ];
+        let c = matrix![ N4, N1 => 24; 64; 76; 36];
         assert_eq!(a * b, c);
     }
 
