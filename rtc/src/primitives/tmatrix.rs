@@ -1,5 +1,5 @@
 use num::Integer;
-use num_traits::{Num, NumAssignOps, One, Signed, Zero};
+use num_traits::{Float, Num, NumAssignOps, One, Signed, Zero};
 
 use std::convert::From;
 use std::fmt;
@@ -38,7 +38,7 @@ pub struct Matrix<T, M: Nat, N: Nat> {
 macro_rules! matrix {
     ( $m:ty, $n:ty => $( $( $val:expr ),+ );* ) => {
         {
-            {type M = $m;
+            type M = $m;
             type N = $n;
             use $crate::primitives::tmatrix::Matrix;
             let data = vec![ $( vec![$($val),+] ),* ];
@@ -46,15 +46,12 @@ macro_rules! matrix {
             assert_eq!(data[0].len(), N::val());
             let flattened = data.into_iter().map(|arr| arr.into_iter()).flatten().collect::<Vec<_>>();
             assert_eq!(flattened.len(), M::val() * N::val());
-            let mut m = Matrix::<_, M, N>::new_uninitialized();
-            m.data = flattened;
-            let m = m;
-            m}
+            Matrix::<_, M, N>::from(flattened)
         }
     };
     ( $m:ty, $n:ty => $( $( $val:expr )+ );* ) => {
         {
-            {type M = $m;
+            type M = $m;
             type N = $n;
             use $crate::primitives::tmatrix::Matrix;
             let data = vec![ $( vec![$($val),+] ),* ];
@@ -62,17 +59,13 @@ macro_rules! matrix {
             assert_eq!(data[0].len(), N::val());
             let flattened = data.into_iter().map(|arr| arr.into_iter()).flatten().collect::<Vec<_>>();
             assert_eq!(flattened.len(), M::val() * N::val());
-            let mut m = Matrix::<_, M, N>::new_uninitialized();
-            m.data = flattened;
-            let m = m;
-            m}
+            Matrix::<_, M, N>::from(flattened)
         }
     }
 }
 
 impl<T, M, N> From<Vec<T>> for Matrix<T, M, N>
 where
-    T: Num + Copy,
     M: Nat + Val,
     N: Nat + Val,
 {
@@ -118,6 +111,7 @@ impl<T, M: Nat + Val, N: Nat + Val> Matrix<T, M, N> {
     /// Convert a pair of matrix coordinates to an index into a data buffer
     /// that's implemented in row_major order
     /// It's interpreted as i'th row and j'th column
+    #[allow(clippy::wrong_self_convention)]
     pub fn to_row_major(i: usize, j: usize) -> usize {
         N::val() * i + j
     }
@@ -162,15 +156,44 @@ impl<T, M: Nat + Val, N: Nat + Val> Matrix<T, M, N> {
 
 impl<T: Copy, M: Nat + Val, N: Nat + Val> Matrix<T, M, N> {
     pub fn transpose(&self) -> Matrix<T, N, M> {
-        let mut m = Matrix::new_uninitialized();
         let mut v = Vec::with_capacity(M::val() * N::val());
         for i in 0..M::val() {
             for j in 0..N::val() {
                 v.push(self[(j, i)]);
             }
         }
-        m.data = v;
-        m
+        Matrix::from(v)
+    }
+}
+
+impl<T, M, N> Matrix<T, M, N>
+where
+    T: Signed,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    /// Take absolute value of each element of the matrix
+    fn abs(self) -> Self {
+        Matrix::from(self.iter().map(T::abs).collect::<Vec<_>>())
+    }
+}
+
+impl<T, M> Matrix<T, M, N1>
+where
+    T: Float + Copy + std::iter::Sum,
+    M: Nat + Val
+{
+    /// Compute the magnitude/norm/length of the vector
+    pub fn mag(&self) -> T {
+        let s: T = self.iter().map(|x| *x * *x).sum();
+        s.sqrt()
+    }
+
+    /// Normalize a vector such that you get a vector with same direction
+    /// but a magnitude of 1.
+    pub fn unit(self) -> Self {
+        let mag = self.mag();
+        self / mag
     }
 }
 
@@ -299,7 +322,7 @@ impl<T: ApproxEq + Copy, M: Nat + Val, N: Nat + Val> ApproxEq<T> for &Matrix<T, 
 /// Multiply a matrix A with another matrix B
 impl<T, MA, N, NB> Mul<Matrix<T, N, NB>> for Matrix<T, MA, N>
 where
-    T: Num + Default + Copy + std::iter::Sum<T> + fmt::Debug,
+    T: Num + Default + Copy + std::iter::Sum<T>,
     MA: Nat + Val,
     N: Nat + Val,
     NB: Nat + Val,
@@ -489,6 +512,12 @@ impl<T: Num + Copy + Signed + std::iter::Sum + NumAssignOps> Matrix<T, N4, N4> {
             let _ = m2.iter_mut().map(|x| *x /= det).collect::<Vec<_>>();
             Some(m2)
         }
+    }
+}
+
+impl<T: Copy> Matrix<T, N1, N1> {
+    pub fn as_scalar(&self) -> T {
+        self[(0, 0)]
     }
 }
 

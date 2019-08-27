@@ -3,7 +3,6 @@ use std::f32;
 
 use crate::utils::{clamp, split_long_lines, typelevel_nums::*};
 
-use super::approx_eq::ApproxEq;
 use super::pixel::Pixel;
 use super::tmatrix::Matrix;
 
@@ -70,6 +69,7 @@ fn clamp_and_normalize(num: f32) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::primitives::approx_eq::ApproxEq;
 
     #[test]
     fn read_and_write() {
