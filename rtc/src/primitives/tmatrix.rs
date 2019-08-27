@@ -181,7 +181,7 @@ where
 impl<T, M> Matrix<T, M, N1>
 where
     T: Float + Copy + std::iter::Sum,
-    M: Nat + Val
+    M: Nat + Val,
 {
     /// Compute the magnitude/norm/length of the vector
     pub fn mag(&self) -> T {

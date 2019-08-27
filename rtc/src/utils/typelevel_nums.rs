@@ -19,11 +19,11 @@ pub trait NonZero {}
 // pub trait Positive = NonZero + Nat; currently experimental
 
 /// Zero
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct N0;
 
 /// Successor of a natural number
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, PartialOrd)]
 pub struct Succ<N: Nat> {
     _marker: PhantomData<N>,
 }
