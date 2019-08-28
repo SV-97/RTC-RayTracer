@@ -1,7 +1,7 @@
 use std::convert::From;
 use std::ops::{Add, Mul, Sub};
 
-use super::approx_eq::ApproxEq;
+use super::approx_eq::{ApproxEq, EPSILON_F32};
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 /// A 32-bit pixel in RGB colour space
@@ -100,10 +100,9 @@ impl Mul<f32> for Pixel {
     }
 }
 
-impl ApproxEq<f32> for Pixel {
-    const EPSILON: f32 = f32::EPSILON;
+impl ApproxEq for Pixel {
     fn approx_eq(self, other: Self) -> bool {
-        (self - other).abs().into_iter().all(|c| c < Self::EPSILON)
+        (self - other).abs().into_iter().all(|c| c < EPSILON_F32)
     }
 }
 

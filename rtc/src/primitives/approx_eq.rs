@@ -1,22 +1,20 @@
 /// Trait that provides equivalence for floating-point based types
-#[allow(clippy::declare_interior_mutable_const)]
-pub trait ApproxEq<E = Self, Rhs = Self> {
+pub trait ApproxEq<Rhs = Self> {
     /// Maximum allowed error such that two instances are regarded as being equal.
-    const EPSILON: E;
     fn approx_eq(self, other: Rhs) -> bool;
 }
 
+pub const EPSILON_F64: f64 = 0.1e-4;
 impl ApproxEq for f64 {
-    const EPSILON: Self = 0.1e-4;
     fn approx_eq(self, other: Self) -> bool {
-        (self - other).abs() < Self::EPSILON
+        (self - other).abs() < EPSILON_F64
     }
 }
 
+pub const EPSILON_F32: f32 = 0.1e-4;
 impl ApproxEq for f32 {
-    const EPSILON: Self = 0.1e-4;
     fn approx_eq(self, other: Self) -> bool {
-        (self - other).abs() < Self::EPSILON
+        (self - other).abs() < EPSILON_F32
     }
 }
 

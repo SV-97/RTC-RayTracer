@@ -129,8 +129,7 @@ where
     }
 }
 
-impl<T: ApproxEq + Copy, M: Nat + Val, N: Nat + Val> ApproxEq<T> for &Matrix<T, M, N> {
-    const EPSILON: T = T::EPSILON;
+impl<T: ApproxEq + Copy, M: Nat + Val, N: Nat + Val> ApproxEq for &Matrix<T, M, N> {
     fn approx_eq(self, other: Self) -> bool {
         self.iter().zip(other.iter()).all(|(l, r)| l.approx_eq(*r))
     }

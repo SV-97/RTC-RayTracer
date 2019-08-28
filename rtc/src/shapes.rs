@@ -6,18 +6,65 @@ use crate::primitives::{
     vector::{point, ScalarProd},
 };
 
-pub trait Shape {
-    fn intersect(&self, ray: &Ray) -> Option<Intersections>;
+pub trait Shape<'a>
+where
+    Self: Sized,
+{
+    fn intersect(&'a self, ray: &Ray) -> Option<Intersections<'a, Self>>;
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
+pub struct Intersection<'a, T>
+where
+    T: Shape<'a>,
+{
+    t: f64,
+    object: &'a T,
+}
+
+impl<'a, T> Intersection<'a, T>
+where
+    T: Shape<'a>,
+{
+    pub fn new(t: f64, object: &'a T) -> Self {
+        Intersection { t, object }
+    }
+}
+
+impl<'a, T: ApproxEq> ApproxEq for Intersection<'a, T>
+where
+    T: Shape<'a>,
+    &'a T: ApproxEq,
+{
+    fn approx_eq(self, other: Self) -> bool {
+        self.t.approx_eq(other.t) && self.object.approx_eq(other.object)
+    }
+}
+
+impl<'a, T> ApproxEq for &Intersection<'a, T>
+where
+    T: Shape<'a>,
+    &'a T: ApproxEq,
+{
+    fn approx_eq(self, other: Self) -> bool {
+        self.t.approx_eq(other.t) && self.object.approx_eq(other.object)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
-pub struct Intersections {
+pub struct Intersections<'a, T>
+where
+    T: Shape<'a>,
+{
     /// Intersections
-    is: Vec<Intersection>,
+    is: Vec<Intersection<'a, T>>,
 }
 
-impl Intersections {
-    pub fn new(is: Vec<Intersection>) -> Self {
+impl<'a, T> Intersections<'a, T>
+where
+    T: Shape<'a>,
+{
+    pub fn new(is: Vec<Intersection<'a, T>>) -> Self {
         Intersections { is }
     }
 
@@ -26,46 +73,27 @@ impl Intersections {
     }
 }
 
-impl Index<usize> for Intersections {
-    type Output = Intersection;
+impl<'a, T> Index<usize> for Intersections<'a, T>
+where
+    T: Shape<'a>,
+{
+    type Output = Intersection<'a, T>;
 
     fn index(&self, i: usize) -> &Self::Output {
         &self.is[i]
     }
 }
 
-impl ApproxEq<f64> for &Intersections {
-    const EPSILON: f64 = Intersection::EPSILON;
+impl<'a, T> ApproxEq for &Intersections<'a, T>
+where
+    T: Shape<'a>,
+    &'a T: ApproxEq,
+{
     fn approx_eq(self, other: Self) -> bool {
         self.is
             .iter()
             .zip(other.is.iter())
             .all(|(l, r)| l.approx_eq(r))
-    }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
-pub struct Intersection {
-    t: f64,
-}
-
-impl Intersection {
-    pub fn new(t: f64) -> Self {
-        Intersection { t }
-    }
-}
-
-impl ApproxEq<f64> for Intersection {
-    const EPSILON: f64 = f64::EPSILON;
-    fn approx_eq(self, other: Self) -> bool {
-        self.t.approx_eq(other.t)
-    }
-}
-
-impl ApproxEq<f64> for &Intersection {
-    const EPSILON: f64 = f64::EPSILON;
-    fn approx_eq(self, other: Self) -> bool {
-        self.t.approx_eq(other.t)
     }
 }
 
@@ -78,15 +106,20 @@ impl Default for Sphere {
     }
 }
 
-impl ApproxEq<f64> for Sphere {
-    const EPSILON: f64 = f64::EPSILON;
+impl ApproxEq for Sphere {
     fn approx_eq(self, other: Self) -> bool {
-        unimplemented!()
+        true
     }
 }
 
-impl Shape for Sphere {
-    fn intersect(&self, ray: &Ray) -> Option<Intersections> {
+impl ApproxEq for &Sphere {
+    fn approx_eq(self, other: Self) -> bool {
+        true
+    }
+}
+
+impl<'a> Shape<'a> for Sphere {
+    fn intersect(&'a self, ray: &Ray) -> Option<Intersections<'a, Self>> {
         let sphere_to_ray = (&ray.origin) - point(0., 0., 0.);
         let a = (&ray.direction).scalar_prod(&ray.direction);
         let b = 2.0 * (&ray.direction).scalar_prod(&sphere_to_ray);
@@ -102,7 +135,9 @@ impl Shape for Sphere {
             let mut v = vec![t1, t2];
             v.sort_by(|a, b| a.partial_cmp(b).unwrap());
             Some(Intersections::new(
-                v.into_iter().map(Intersection::new).collect::<Vec<_>>(),
+                v.into_iter()
+                    .map(|t| Intersection::new(t, self))
+                    .collect::<Vec<_>>(),
             ))
         }
     }
@@ -122,8 +157,8 @@ mod tests {
         let ray = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
         let is = s.intersect(&ray).unwrap();
         assert_eq!(is.len(), 2);
-        assert_approx_eq!(is[0], &Intersection::new(4.0));
-        assert_approx_eq!(is[1], &Intersection::new(6.0));
+        assert_approx_eq!(is[0], &Intersection::new(4.0, &s));
+        assert_approx_eq!(is[1], &Intersection::new(6.0, &s));
     }
 
     #[test]
@@ -132,8 +167,8 @@ mod tests {
         let ray = Ray::new(point(0., 1., -5.), vector(0., 0., 1.));
         let is = s.intersect(&ray).unwrap();
         assert_eq!(is.len(), 2);
-        assert_approx_eq!(is[0], &Intersection::new(5.0));
-        assert_approx_eq!(is[1], &Intersection::new(5.0));
+        assert_approx_eq!(is[0], &Intersection::new(5.0, &s));
+        assert_approx_eq!(is[1], &Intersection::new(5.0, &s));
     }
 
     #[test]
@@ -142,8 +177,8 @@ mod tests {
         let ray = Ray::new(point(0., 0., 0.), vector(0., 0., 1.));
         let is = s.intersect(&ray).unwrap();
         assert_eq!(is.len(), 2);
-        assert_approx_eq!(is[0], &Intersection::new(-1.0));
-        assert_approx_eq!(is[1], &Intersection::new(1.0));
+        assert_approx_eq!(is[0], &Intersection::new(-1.0, &s));
+        assert_approx_eq!(is[1], &Intersection::new(1.0, &s));
     }
 
     #[test]
@@ -152,7 +187,7 @@ mod tests {
         let ray = Ray::new(point(0., 0., 5.), vector(0., 0., 1.));
         let is = s.intersect(&ray).unwrap();
         assert_eq!(is.len(), 2);
-        assert_approx_eq!(is[0], &Intersection::new(-6.0));
-        assert_approx_eq!(is[1], &Intersection::new(-4.0));
+        assert_approx_eq!(is[0], &Intersection::new(-6.0, &s));
+        assert_approx_eq!(is[1], &Intersection::new(-4.0, &s));
     }
 }
