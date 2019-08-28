@@ -4,6 +4,8 @@ extern crate num_traits;
 mod examples;
 #[allow(dead_code)]
 mod primitives;
+mod profile;
+mod shapes;
 mod utils;
 
 fn main() {
