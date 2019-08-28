@@ -1,4 +1,5 @@
 #![recursion_limit = "2048"]
+#![allow(clippy::cast_lossless)]
 extern crate num_traits;
 
 mod examples;

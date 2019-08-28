@@ -20,9 +20,8 @@ impl<WIDTH: Nat + Val, HEIGHT: Nat + Val> Canvas<WIDTH, HEIGHT> {
         let mut errs = vec![];
         for i in y - half_height..y + half_height {
             for j in x - half_width..x + half_width {
-                match self.draw(i, j, pixel) {
-                    Err(e) => errs.push(e),
-                    _ => (),
+                if let Err(e) = self.draw(i, j, pixel) {
+                    errs.push(e);
                 }
             }
         }

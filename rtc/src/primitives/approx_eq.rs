@@ -1,4 +1,5 @@
 /// Trait that provides equivalence for floating-point based types
+#[allow(clippy::declare_interior_mutable_const)]
 pub trait ApproxEq<E = Self, Rhs = Self> {
     /// Maximum allowed error such that two instances are regarded as being equal.
     const EPSILON: E;
