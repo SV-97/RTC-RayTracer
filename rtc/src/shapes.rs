@@ -1,4 +1,5 @@
 use std::ops::Index;
+use std::cell::{Ref, RefCell};
 
 use crate::primitives::{
     approx_eq::ApproxEq,
@@ -16,6 +17,8 @@ where
     fn get_transform(&'a self) -> &'a Transformation;
     /// Find all intersections of a shape with a ray if there are some
     fn intersect(&'a self, ray: &Ray) -> Option<Intersections<'a, Self>>;
+    /// Get the inversed transformation - should be cached internally
+    fn get_inverse_transform(&'a self) -> Ref<'a, Transformation>;
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
@@ -123,12 +126,14 @@ where
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct Sphere {
     transformation: Transformation,
+    inverse_transformation: RefCell<Option<Transformation>>,
 }
 
 impl Default for Sphere {
     fn default() -> Self {
         Sphere {
             transformation: Transformation::identity(),
+            inverse_transformation: RefCell::new(Some(Transformation::identity())),
         }
     }
 }
@@ -147,33 +152,45 @@ impl ApproxEq for &Sphere {
 
 impl<'a> Shape<'a> for Sphere {
     fn intersect(&'a self, ray: &Ray) -> Option<Intersections<'a, Self>> {
-        let sphere_to_ray = (&ray.origin) - point(0., 0., 0.);
-        let a = (&ray.direction).scalar_prod(&ray.direction);
-        let b = 2.0 * (&ray.direction).scalar_prod(&sphere_to_ray);
-        let c = (&sphere_to_ray).scalar_prod(&sphere_to_ray) - 1.0;
-        let discriminant = b.powi(2) - 4.0 * a * c;
-        if discriminant < 0.0 {
-            None
-        } else {
-            let d_sqrt = discriminant.sqrt();
-            let ta = 2.0 * a;
-            let t1 = (-b - d_sqrt) / ta;
-            let t2 = (-b + d_sqrt) / ta;
-            let v = vec![t1, t2];
-            Some(Intersections::new(
-                v.into_iter()
-                    .map(|t| Intersection::new(t, self))
-                    .collect::<Vec<_>>(),
-            ))
-        }
+        let mut out = None;
+        Ref::map(self.get_inverse_transform(), |inverse| {
+            let ray2 = ray.transform(inverse);
+            let sphere_to_ray = (&ray2.origin) - point(0., 0., 0.);
+            let a = (&ray2.direction).scalar_prod(&ray2.direction);
+            let b = 2.0 * (&ray2.direction).scalar_prod(&sphere_to_ray);
+            let c = (&sphere_to_ray).scalar_prod(&sphere_to_ray) - 1.0;
+            let discriminant = b.powi(2) - 4.0 * a * c;
+            if discriminant < 0.0 {
+                out = None;
+            } else {
+                let d_sqrt = discriminant.sqrt();
+                let ta = 2.0 * a;
+                let t1 = (-b - d_sqrt) / ta;
+                let t2 = (-b + d_sqrt) / ta;
+                let v = vec![t1, t2];
+                out = Some(Intersections::new(
+                    v.into_iter()
+                        .map(|t| Intersection::new(t, self))
+                        .collect::<Vec<_>>(),
+                ));
+            }
+            inverse
+        });
+        out
     }
 
     fn set_transform(&mut self, transformation: Transformation) {
         self.transformation = transformation;
+        self.inverse_transformation.replace(None);
     }
 
     fn get_transform(&'a self) -> &'a Transformation {
         &self.transformation
+    }
+
+    fn get_inverse_transform(&'a self) -> Ref<'a, Transformation> {
+        self.inverse_transformation.borrow_mut().get_or_insert_with(|| self.transformation.invert().expect("Encountered uninvertable matrix"));
+        Ref::map(self.inverse_transformation.borrow(), |opt_ref| opt_ref.as_ref().unwrap())
     }
 }
 
@@ -261,5 +278,41 @@ mod tests {
         let i4 = Intersection::new(2., &s);
         let is = Intersections::new(vec![i1, i2, i3, i4.clone()]);
         assert_approx_eq!(is.hit().unwrap(), &i4);
+    }
+
+    #[test]
+    fn sphere_transform_get() {
+        let s = Sphere::default();
+        assert_approx_eq!(s.get_transform(), &Transformation::identity());
+    }
+
+    #[test]
+    fn sphere_transform_set() {
+        let mut s = Sphere::default();
+        let t = Transformation::new_translation(2., 3., 4.);
+        s.set_transform(t.clone());
+        assert_approx_eq!(s.get_transform(), &t);
+    }
+
+    #[test]
+    fn interset_ray_scaled_sphere() {
+        let r = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
+        let mut s = Sphere::default();
+        let t = Transformation::new_scaling(2., 2., 2.);
+        s.set_transform(t.clone());
+        let is = s.intersect(&r).unwrap();
+        assert_eq!(is.len(), 2);
+        assert_approx_eq!(is[0].t, 3.);
+        assert_approx_eq!(is[1].t, 7.);
+    }
+
+    #[test]
+    fn interset_ray_translated_sphere() {
+        let r = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
+        let mut s = Sphere::default();
+        let t = Transformation::new_translation(5., 0., 0.);
+        s.set_transform(t.clone());
+        let is = s.intersect(&r);
+        assert!(is.is_none());
     }
 }
