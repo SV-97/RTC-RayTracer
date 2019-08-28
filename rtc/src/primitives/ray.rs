@@ -1,4 +1,4 @@
-use crate::primitives::vector::{Point, Vec3D};
+use crate::primitives::vector::{Point, Transformation, Vec3D};
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct Ray {
@@ -14,6 +14,13 @@ impl Ray {
     pub fn position(&self, t: f64) -> Point {
         &self.origin + &self.direction * t
     }
+
+    pub fn transform(&self, transformation: Transformation) -> Self {
+        Self::new(
+            &transformation * &self.origin,
+            &transformation * &self.direction,
+        )
+    }
 }
 
 #[cfg(test)]
@@ -21,7 +28,7 @@ mod tests {
     use super::*;
     use crate::{
         assert_approx_eq,
-        primitives::vector::{point, vector},
+        primitives::vector::{point, vector, Transformation},
     };
 
     #[test]
@@ -40,5 +47,23 @@ mod tests {
         assert_approx_eq!(r.position(1.), &point(3., 3., 4.));
         assert_approx_eq!(r.position(-1.), &point(1., 3., 4.));
         assert_approx_eq!(r.position(2.5), &point(4.5, 3., 4.));
+    }
+
+    #[test]
+    fn transform_translate() {
+        let r = Ray::new(point(1., 2., 3.), vector(0., 1., 0.));
+        let m = Transformation::new_translation(3., 4., 5.);
+        let r2 = r.transform(m);
+        assert_approx_eq!(r2.origin, &point(4., 6., 8.));
+        assert_approx_eq!(r2.direction, &vector(0., 1., 0.));
+    }
+
+    #[test]
+    fn transform_scale() {
+        let r = Ray::new(point(1., 2., 3.), vector(0., 1., 0.));
+        let m = Transformation::new_scaling(2., 3., 4.);
+        let r2 = r.transform(m);
+        assert_approx_eq!(r2.origin, &point(2., 6., 12.));
+        assert_approx_eq!(r2.direction, &vector(0., 3., 0.));
     }
 }
