@@ -169,6 +169,16 @@ fn identity() {
         7 8 9
     ];
     assert_eq!(a.clone() * <Matrix<_, N3, N3>>::identity(), a.clone());
+    assert_eq!(
+        <Matrix<_, N5, N5>>::identity(),
+        matrix![ N5, N5 =>
+            1 0 0 0 0;
+            0 1 0 0 0;
+            0 0 1 0 0;
+            0 0 0 1 0;
+            0 0 0 0 1
+        ]
+    );
 }
 
 #[test]
