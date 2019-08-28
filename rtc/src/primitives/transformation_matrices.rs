@@ -1,10 +1,10 @@
 //! Matrix Transformations
 use num_traits::{Float, Num};
 
-use super::vector::Vec4D;
-use crate::utils::typelevel_nums::*;
+use crate::{matrix, utils::typelevel_nums::*};
 
 use super::tmatrix::Matrix;
+use super::vector::Vec4D;
 
 impl<T: Num + Copy> Matrix<T, N4, N4> {
     /// Translate in space
