@@ -3,6 +3,8 @@
 
 use num_traits::{Float, Num};
 
+use std::mem::replace;
+
 use crate::{matrix, utils::typelevel_nums::*};
 
 use super::tmatrix::Matrix;
@@ -135,6 +137,99 @@ where
     pub fn rotate_z(&self, r: T) -> Self {
         let a = Matrix::new_z_rotation(r);
         a * self.clone()
+    }
+}
+
+impl<T> Vec4D<T>
+where
+    T: Num + Default + Copy + std::iter::Sum<T>,
+{
+    /// Translate in space
+    pub fn translate_mut(&mut self, x: T, y: T, z: T) -> &mut Self {
+        let new = Matrix::new_translation(x, y, z) * &*self;
+        replace(self, new);
+        self
+    }
+
+    /// Scale (in relation to the origin)
+    pub fn scale_mut(&mut self, x: T, y: T, z: T) -> &mut Self {
+        let new = Matrix::new_scaling(x, y, z) * &*self;
+        replace(self, new);
+        self
+    }
+
+    /// Shear: x in proportion to y, x in proportion to z
+    pub fn shear_mut(&mut self, xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> &mut Self {
+        let new = Matrix::new_shear(xy, xz, yx, yz, zx, zy) * &*self;
+        replace(self, new);
+        self
+    }
+}
+
+
+impl<T> Vec4D<T>
+where
+    T: Float + Default + Copy + std::iter::Sum<T>,
+{
+    /// Rotate around the x axis by r radians
+    pub fn rotate_x_mut(&mut self, r: T) -> &mut Self {
+        let new = Matrix::new_x_rotation(r) * &*self;
+        replace(self, new);
+        self
+    }
+
+    /// Rotate around the y axis by r radians
+    pub fn rotate_y_mut(&mut self, r: T) -> &mut Self {
+        let new = Matrix::new_y_rotation(r) * &*self;
+        replace(self, new);
+        self
+    }
+
+    /// Rotate around the x axis by z radians
+    pub fn rotate_z_mut(&mut self, r: T) -> &mut Self {
+        let new = Matrix::new_z_rotation(r) * &*self;
+        replace(self, new);
+        self
+    }
+}
+
+impl<T> Matrix4x4<T>
+where
+    T: Float + Default + Copy + std::iter::Sum<T>,
+{
+    /// Rotate around the x axis by r radians
+    pub fn and_rotate_x(self, r: T) -> Self {
+        Matrix::new_x_rotation(r) * self
+    }
+
+    /// Rotate around the y axis by r radians
+    pub fn and_rotate_y(self, r: T) -> Self {
+        Matrix::new_y_rotation(r) * self
+    }
+
+    /// Rotate around the x axis by z radians
+    pub fn and_rotate_z(self, r: T) -> Self {
+        Matrix::new_z_rotation(r) * self
+    }
+}
+
+impl<T> Matrix4x4<T>
+where
+    T: Num + Default + Copy + std::iter::Sum<T>,
+{
+    /// Translate in space
+    pub fn and_translate(self, x: T, y: T, z: T) -> Self {
+        Matrix::new_translation(x, y, z) * self
+    }
+
+    /// Scale (in relation to the origin)
+    pub fn and_scale(self, x: T, y: T, z: T) -> Self {
+        Matrix::new_scaling(x, y, z) * self
+    }
+
+    /// Shear: x in proportion to y, x in proportion to z
+    pub fn and_shear(self, xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> Self {
+        Matrix::new_shear(xy, xz, yx, yz, zx, zy) * self
     }
 }
 
