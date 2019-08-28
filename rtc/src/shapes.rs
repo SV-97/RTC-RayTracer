@@ -3,13 +3,18 @@ use std::ops::Index;
 use crate::primitives::{
     approx_eq::ApproxEq,
     ray::Ray,
-    vector::{point, ScalarProd},
+    vector::{point, ScalarProd, Transformation},
 };
 
 pub trait Shape<'a>
 where
     Self: Sized,
 {
+    /// Set the transformation on a shape
+    fn set_transform(&mut self, transformation: Transformation);
+    /// Get the transformation of a shape
+    fn get_transform(&'a self) -> &'a Transformation;
+    /// Find all intersections of a shape with a ray if there are some
     fn intersect(&'a self, ray: &Ray) -> Option<Intersections<'a, Self>>;
 }
 
@@ -116,23 +121,27 @@ where
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
-pub struct Sphere;
+pub struct Sphere {
+    transformation: Transformation,
+}
 
 impl Default for Sphere {
     fn default() -> Self {
-        Sphere {}
+        Sphere {
+            transformation: Transformation::identity(),
+        }
     }
 }
 
 impl ApproxEq for Sphere {
     fn approx_eq(self, other: Self) -> bool {
-        true
+        self.transformation.approx_eq(&other.transformation)
     }
 }
 
 impl ApproxEq for &Sphere {
     fn approx_eq(self, other: Self) -> bool {
-        true
+        self.transformation.approx_eq(&other.transformation)
     }
 }
 
@@ -157,6 +166,14 @@ impl<'a> Shape<'a> for Sphere {
                     .collect::<Vec<_>>(),
             ))
         }
+    }
+
+    fn set_transform(&mut self, transformation: Transformation) {
+        self.transformation = transformation;
+    }
+
+    fn get_transform(&'a self) -> &'a Transformation {
+        &self.transformation
     }
 }
 
