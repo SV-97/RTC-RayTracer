@@ -4,7 +4,7 @@ use crate::{
 };
 use std::f64::consts;
 
-/// Creates and image of a projectile simulation
+/// Draws the dots of a clockface
 pub fn draw_clockface() -> std::io::Result<()> {
     let mut canvas = Canvas::<N900, N900>::new();
     let pen = Pixel::from((20, 150, 255)); // blue
