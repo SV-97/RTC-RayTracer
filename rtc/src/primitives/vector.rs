@@ -48,13 +48,48 @@ impl<T: Copy> Vec4D<T> {
     }
 }
 
-impl<T: Num + Copy + Default + std::iter::Sum<T>> Vec4D<T> {
-    /// Calculate the scalar product of two vectors
-    pub fn scalar_prod(self, other: Self) -> T {
+pub trait ScalarProd<Rhs = Self> {
+    type Output;
+    /// Calculate the dot product / scalar product of two vectors
+    fn scalar_prod(self, other: Rhs) -> Self::Output;
+}
+
+/// v1 * v2
+impl<T: Num + Copy + Default + std::iter::Sum<T>> ScalarProd for Vec4D<T> {
+    type Output = T;
+    fn scalar_prod(self, other: Self) -> Self::Output {
         let m = self.transpose() * other;
         m.as_scalar()
     }
+}
 
+/// v1 * &v2
+impl<T: Num + Copy + Default + std::iter::Sum<T>> ScalarProd<&Self> for Vec4D<T> {
+    type Output = T;
+    fn scalar_prod(self, other: &Self) -> Self::Output {
+        let m = self.transpose() * other.clone();
+        m.as_scalar()
+    }
+}
+
+/// &v1 * &v2
+impl<T: Num + Copy + Default + std::iter::Sum<T>> ScalarProd<Vec4D<T>> for &Vec4D<T> {
+    type Output = T;
+    fn scalar_prod(self, other: Vec4D<T>) -> Self::Output {
+        let m = self.transpose() * other;
+        m.as_scalar()
+    }
+}
+
+impl<T: Num + Copy + Default + std::iter::Sum<T>> ScalarProd for &Vec4D<T> {
+    type Output = T;
+    fn scalar_prod(self, other: Self) -> Self::Output {
+        let m = self.transpose() * other.clone();
+        m.as_scalar()
+    }
+}
+
+impl<T: Num + Copy + Default + std::iter::Sum<T>> Vec4D<T> {
     /// Cross product between two vectors
     pub fn cross(self, other: Self) -> Self {
         vector(
@@ -81,9 +116,8 @@ impl<T: Num + Copy + Default + std::iter::Sum<T>> Vec4D<T> {
 
 #[cfg(test)]
 mod tests {
-    #[macro_use]
     use super::*;
-    use crate::primitives::approx_eq::ApproxEq;
+    use crate::{matrix, primitives::approx_eq::ApproxEq};
 
     #[test]
     fn scalar_prod() {
