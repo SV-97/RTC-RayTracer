@@ -311,6 +311,29 @@ where
 }
 
 /// Multiply a matrix A with another matrix B
+/// A * &B
+impl<T, MA, N, NB> Mul<&Matrix<T, N, NB>> for Matrix<T, MA, N>
+where
+    T: Num + Default + Copy + std::iter::Sum<T>,
+    MA: Nat + Val,
+    N: Nat + Val,
+    NB: Nat + Val,
+{
+    type Output = Matrix<T, MA, NB>;
+
+    fn mul(self, other: &Matrix<T, N, NB>) -> Self::Output {
+        let mut new = Matrix::new();
+        for (i, row) in self.iter_rows().enumerate() {
+            let row = row.collect::<Vec<_>>();
+            for (j, col) in other.iter_cols().enumerate() {
+                new[(i, j)] = row.iter().zip(col).map(|(r, c)| **r * *c).sum();
+            }
+        }
+        new
+    }
+}
+
+/// Multiply a matrix A with another matrix B
 /// &A * &B
 impl<T, MA, N, NB> Mul<&Matrix<T, N, NB>> for &Matrix<T, MA, N>
 where
