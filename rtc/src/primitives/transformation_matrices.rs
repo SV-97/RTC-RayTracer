@@ -8,7 +8,9 @@ use crate::{matrix, utils::typelevel_nums::*};
 use super::tmatrix::Matrix;
 use super::vector::Vec4D;
 
-impl<T: Num + Copy> Matrix<T, N4, N4> {
+pub type Matrix4x4<T> = Matrix<T, N4, N4>;
+
+impl<T: Num + Copy> Matrix4x4<T> {
     /// Translate in space
     pub fn new_translation(x: T, y: T, z: T) -> Self {
         let n = T::zero();
@@ -46,7 +48,7 @@ impl<T: Num + Copy> Matrix<T, N4, N4> {
     }
 }
 
-impl<T: Float + Copy> Matrix<T, N4, N4> {
+impl<T: Float + Copy> Matrix4x4<T> {
     /// Rotate around the x axis by r radians
     pub fn new_x_rotation(r: T) -> Self {
         let n = T::zero();

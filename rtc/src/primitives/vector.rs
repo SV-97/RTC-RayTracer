@@ -2,7 +2,7 @@ use num_traits::Num;
 
 use crate::utils::typelevel_nums::*;
 
-use super::tmatrix::Matrix;
+use super::{tmatrix::Matrix, transformation_matrices::Matrix4x4};
 
 /// A general 4D Vector
 pub type Vec4D<T> = Matrix<T, N4, N1>;
@@ -12,6 +12,9 @@ pub type Vec3D = Vec4D<f64>;
 
 /// A Point in 3D Space implemented as a vector - the fourth dimension identifies this as a point
 pub type Point = Vec4D<f64>;
+
+/// A transformation matrix for Vec4Ds
+pub type Transformation = Matrix4x4<f64>;
 
 #[macro_export]
 macro_rules! vec4 {
