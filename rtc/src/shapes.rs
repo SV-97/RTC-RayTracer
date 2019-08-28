@@ -65,11 +65,29 @@ where
     T: Shape<'a>,
 {
     pub fn new(is: Vec<Intersection<'a, T>>) -> Self {
+        let mut is = is;
+        is.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
         Intersections { is }
     }
 
     pub fn len(&self) -> usize {
         self.is.len()
+    }
+
+    pub fn hit(&self) -> Option<&Intersection<'a, T>> {
+        self.is.iter().fold(None, |old, new| {
+            if let Some(o) = old {
+                if new.t < o.t {
+                    Some(new)
+                } else {
+                    Some(o)
+                }
+            } else if new.t > 0.0 {
+                Some(new)
+            } else {
+                None
+            }
+        })
     }
 }
 
@@ -132,8 +150,7 @@ impl<'a> Shape<'a> for Sphere {
             let ta = 2.0 * a;
             let t1 = (-b - d_sqrt) / ta;
             let t2 = (-b + d_sqrt) / ta;
-            let mut v = vec![t1, t2];
-            v.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            let v = vec![t1, t2];
             Some(Intersections::new(
                 v.into_iter()
                     .map(|t| Intersection::new(t, self))
@@ -189,5 +206,43 @@ mod tests {
         assert_eq!(is.len(), 2);
         assert_approx_eq!(is[0], &Intersection::new(-6.0, &s));
         assert_approx_eq!(is[1], &Intersection::new(-4.0, &s));
+    }
+
+    #[test]
+    fn hit_all_positive() {
+        let s = Sphere::default();
+        let i1 = Intersection::new(1., &s);
+        let i2 = Intersection::new(2., &s);
+        let is = Intersections::new(vec![i2, i1.clone()]);
+        assert_approx_eq!(is.hit().unwrap(), &i1);
+    }
+
+    #[test]
+    fn hit_some_negative() {
+        let s = Sphere::default();
+        let i1 = Intersection::new(-1., &s);
+        let i2 = Intersection::new(1., &s);
+        let is = Intersections::new(vec![i2.clone(), i1]);
+        assert_approx_eq!(is.hit().unwrap(), &i2);
+    }
+
+    #[test]
+    fn hit_all_negative() {
+        let s = Sphere::default();
+        let i1 = Intersection::new(-2., &s);
+        let i2 = Intersection::new(-1., &s);
+        let is = Intersections::new(vec![i2, i1]);
+        assert_eq!(is.hit(), None);
+    }
+
+    #[test]
+    fn hit_always_lowest() {
+        let s = Sphere::default();
+        let i1 = Intersection::new(5., &s);
+        let i2 = Intersection::new(7., &s);
+        let i3 = Intersection::new(-3., &s);
+        let i4 = Intersection::new(2., &s);
+        let is = Intersections::new(vec![i1, i2, i3, i4.clone()]);
+        assert_approx_eq!(is.hit().unwrap(), &i4);
     }
 }
