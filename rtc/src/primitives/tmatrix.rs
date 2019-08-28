@@ -126,13 +126,6 @@ impl<T, M: Nat + Val, N: Nat + Val> Matrix<T, M, N> {
         self.data.iter_mut()
     }
 
-    pub fn iter_indexed(&self) -> impl Iterator<Item = (usize, usize, &T)> {
-        self.iter_rows()
-            .enumerate()
-            .map(|(i, iter)| iter.enumerate().map(move |(j, x)| (i, j, x)))
-            .flatten()
-    }
-
     /// Iterate over the ith row of the matrix
     pub fn iter_row(&self, i: usize) -> impl Iterator<Item = &T> {
         self.iter().skip(i * N::val()).take(N::val())
@@ -151,6 +144,54 @@ impl<T, M: Nat + Val, N: Nat + Val> Matrix<T, M, N> {
     /// Iterate over all rows of the matrix
     pub fn iter_cols(&self) -> impl Iterator<Item = impl Iterator<Item = &T>> {
         (0..N::val()).map(move |j| self.iter_col(j))
+    }
+
+    /// Iterate over 3-tuples (i, j, self[(i,j)])
+    pub fn iter_indexed(&self) -> impl Iterator<Item = (usize, usize, &T)> {
+        self.iter_rows()
+            .enumerate()
+            .map(|(i, iter)| iter.enumerate().map(move |(j, x)| (i, j, x)))
+            .flatten()
+    }
+
+    /// Iterate over all elements deinitializing self
+    pub fn into_iter(self) -> impl Iterator<Item = T> {
+        self.data.into_iter()
+    }
+
+    /// Iterate over the ith row of the matrix deinitializing self
+    pub fn into_iter_row(self, i: usize) -> impl Iterator<Item = T> {
+        self.into_iter().skip(i * N::val()).take(N::val())
+    }
+}
+
+impl<T, M: Nat + Val, N: Nat + Val> Matrix<T, M, N>
+where
+    Matrix<T, M, N>: Clone,
+{
+    /// Iterate over the jth coloumn of the matrix deinitializing self
+    pub fn into_iter_col(self, j: usize) -> impl Iterator<Item = T> {
+        self.into_iter().skip(j).step_by(N::val())
+    }
+
+    /// Iterate over all rows of the matrix deinitializing self
+    // FIXME Find more performant solution over clone
+    pub fn into_iter_rows(self) -> impl Iterator<Item = impl Iterator<Item = T>> {
+        (0..M::val()).map(move |i| self.clone().into_iter_row(i))
+    }
+
+    /// Iterate over all rows of the matrix deinitializing self
+    // FIXME Find more performant solution over clone
+    pub fn into_iter_cols(self) -> impl Iterator<Item = impl Iterator<Item = T>> {
+        (0..N::val()).map(move |j| self.clone().into_iter_col(j))
+    }
+
+    /// Iterate over 3-tuples (i, j, self[(i,j)]) deinitializing self
+    pub fn into_iter_indexed(self) -> impl Iterator<Item = (usize, usize, T)> {
+        self.into_iter_rows()
+            .enumerate()
+            .map(|(i, iter)| iter.enumerate().map(move |(j, x)| (i, j, x)))
+            .flatten()
     }
 }
 
@@ -197,13 +238,70 @@ where
     }
 }
 
+// Arithmetic
+
+/// A + B
 impl<T, M, N> Add for Matrix<T, M, N>
+where
+    T: Num,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    type Output = Self;
+    fn add(self, other: Self) -> Self::Output {
+        Matrix::from(
+            self.into_iter()
+                .zip(other.into_iter())
+                .map(|(l, r)| l + r)
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+/// A + &B
+impl<T, M, N> Add<&Self> for Matrix<T, M, N>
 where
     T: Num + Copy,
     M: Nat + Val,
     N: Nat + Val,
 {
     type Output = Self;
+    fn add(self, other: &Self) -> Self::Output {
+        Matrix::from(
+            self.into_iter()
+                .zip(other.iter())
+                .map(|(l, r)| l + *r)
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+/// &A + B
+impl<T, M, N> Add<Matrix<T, M, N>> for &Matrix<T, M, N>
+where
+    T: Num + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    type Output = Matrix<T, M, N>;
+    fn add(self, other: Matrix<T, M, N>) -> Self::Output {
+        Matrix::from(
+            self.iter()
+                .zip(other.into_iter())
+                .map(|(l, r)| *l + r)
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+/// &A + &B
+impl<T, M, N> Add for &Matrix<T, M, N>
+where
+    T: Num + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    type Output = Matrix<T, M, N>;
     fn add(self, other: Self) -> Self::Output {
         Matrix::from(
             self.iter()
@@ -214,13 +312,68 @@ where
     }
 }
 
+/// A - B
 impl<T, M, N> Sub for Matrix<T, M, N>
+where
+    T: Num,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    type Output = Self;
+    fn sub(self, other: Self) -> Self::Output {
+        Matrix::from(
+            self.into_iter()
+                .zip(other.into_iter())
+                .map(|(l, r)| l - r)
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+/// A - &B
+impl<T, M, N> Sub<&Self> for Matrix<T, M, N>
 where
     T: Num + Copy,
     M: Nat + Val,
     N: Nat + Val,
 {
     type Output = Self;
+    fn sub(self, other: &Self) -> Self::Output {
+        Matrix::from(
+            self.into_iter()
+                .zip(other.iter())
+                .map(|(l, r)| l - *r)
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+/// &A + B
+impl<T, M, N> Sub<Matrix<T, M, N>> for &Matrix<T, M, N>
+where
+    T: Num + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    type Output = Matrix<T, M, N>;
+    fn sub(self, other: Matrix<T, M, N>) -> Self::Output {
+        Matrix::from(
+            self.iter()
+                .zip(other.into_iter())
+                .map(|(l, r)| *l - r)
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+/// &A - &B
+impl<T, M, N> Sub for &Matrix<T, M, N>
+where
+    T: Num + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    type Output = Matrix<T, M, N>;
     fn sub(self, other: Self) -> Self::Output {
         Matrix::from(
             self.iter()
@@ -231,6 +384,7 @@ where
     }
 }
 
+/// A += B
 impl<T, M, N> AddAssign for Matrix<T, M, N>
 where
     T: Num + Copy,
@@ -240,6 +394,23 @@ where
     fn add_assign(&mut self, other: Self) {
         *self = Matrix::from(
             self.iter()
+                .zip(other.into_iter())
+                .map(|(l, r)| *l + r)
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+/// A += &B
+impl<T, M, N> AddAssign<&Self> for Matrix<T, M, N>
+where
+    T: Num + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    fn add_assign(&mut self, other: &Self) {
+        *self = Matrix::from(
+            self.iter()
                 .zip(other.iter())
                 .map(|(l, r)| *l + *r)
                 .collect::<Vec<_>>(),
@@ -247,18 +418,33 @@ where
     }
 }
 
+/// -A
 impl<T, M, N> Neg for Matrix<T, M, N>
 where
-    T: Signed + Copy,
+    T: Signed,
     M: Nat + Val,
     N: Nat + Val,
 {
     type Output = Self;
     fn neg(self) -> Self::Output {
+        Matrix::from(self.into_iter().map(|x| Neg::neg(x)).collect::<Vec<_>>())
+    }
+}
+
+/// -&A
+impl<T, M, N> Neg for &Matrix<T, M, N>
+where
+    T: Signed + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    type Output = Matrix<T, M, N>;
+    fn neg(self) -> Self::Output {
         Matrix::from(self.iter().map(|x| Neg::neg(*x)).collect::<Vec<_>>())
     }
 }
 
+/// A * b
 impl<T, M, N> Mul<T> for Matrix<T, M, N>
 where
     T: Num + Copy,
@@ -267,10 +453,24 @@ where
 {
     type Output = Self;
     fn mul(self, other: T) -> Self::Output {
+        Matrix::from(self.into_iter().map(|x| x * other).collect::<Vec<_>>())
+    }
+}
+
+/// &A * b
+impl<T, M, N> Mul<T> for &Matrix<T, M, N>
+where
+    T: Num + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    type Output = Matrix<T, M, N>;
+    fn mul(self, other: T) -> Self::Output {
         Matrix::from(self.iter().map(|x| *x * other).collect::<Vec<_>>())
     }
 }
 
+/// A / b
 impl<T, M, N> Div<T> for Matrix<T, M, N>
 where
     T: Num + Copy,
@@ -279,7 +479,89 @@ where
 {
     type Output = Self;
     fn div(self, other: T) -> Self::Output {
+        Matrix::from(self.into_iter().map(|x| x / other).collect::<Vec<_>>())
+    }
+}
+
+/// &A / b
+impl<T, M, N> Div<T> for &Matrix<T, M, N>
+where
+    T: Num + Copy,
+    M: Nat + Val,
+    N: Nat + Val,
+{
+    type Output = Matrix<T, M, N>;
+    fn div(self, other: T) -> Self::Output {
         Matrix::from(self.iter().map(|x| *x / other).collect::<Vec<_>>())
+    }
+}
+
+/// Multiply a matrix A with another matrix B
+/// A * B
+impl<T, MA, N, NB> Mul<Matrix<T, N, NB>> for Matrix<T, MA, N>
+where
+    T: Num + Default + Copy + std::iter::Sum<T>,
+    MA: Nat + Val,
+    N: Nat + Val,
+    NB: Nat + Val,
+{
+    type Output = Matrix<T, MA, NB>;
+
+    fn mul(self, other: Matrix<T, N, NB>) -> Self::Output {
+        let mut new = Matrix::new();
+        for (i, row) in self.iter_rows().enumerate() {
+            let row = row.collect::<Vec<_>>();
+            for (j, col) in other.iter_cols().enumerate() {
+                new[(i, j)] = row.iter().zip(col).map(|(r, c)| **r * *c).sum();
+            }
+        }
+        new
+    }
+}
+
+/// Multiply a matrix A with another matrix B
+/// &A * B
+impl<T, MA, N, NB> Mul<Matrix<T, N, NB>> for &Matrix<T, MA, N>
+where
+    T: Num + Default + Copy + std::iter::Sum<T>,
+    MA: Nat + Val,
+    N: Nat + Val,
+    NB: Nat + Val,
+{
+    type Output = Matrix<T, MA, NB>;
+
+    fn mul(self, other: Matrix<T, N, NB>) -> Self::Output {
+        let mut new = Matrix::new();
+        for (i, row) in self.iter_rows().enumerate() {
+            let row = row.collect::<Vec<_>>();
+            for (j, col) in other.iter_cols().enumerate() {
+                new[(i, j)] = row.iter().zip(col).map(|(r, c)| **r * *c).sum();
+            }
+        }
+        new
+    }
+}
+
+/// Multiply a matrix A with another matrix B
+/// &A * &B
+impl<T, MA, N, NB> Mul<&Matrix<T, N, NB>> for &Matrix<T, MA, N>
+where
+    T: Num + Default + Copy + std::iter::Sum<T>,
+    MA: Nat + Val,
+    N: Nat + Val,
+    NB: Nat + Val,
+{
+    type Output = Matrix<T, MA, NB>;
+
+    fn mul(self, other: &Matrix<T, N, NB>) -> Self::Output {
+        let mut new = Matrix::new();
+        for (i, row) in self.iter_rows().enumerate() {
+            let row = row.collect::<Vec<_>>();
+            for (j, col) in other.iter_cols().enumerate() {
+                new[(i, j)] = row.iter().zip(col).map(|(r, c)| **r * *c).sum();
+            }
+        }
+        new
     }
 }
 
@@ -316,28 +598,6 @@ impl<T: ApproxEq + Copy, M: Nat + Val, N: Nat + Val> ApproxEq<T> for &Matrix<T, 
     const EPSILON: T = T::EPSILON;
     fn approx_eq(self, other: Self) -> bool {
         self.iter().zip(other.iter()).all(|(l, r)| l.approx_eq(*r))
-    }
-}
-
-/// Multiply a matrix A with another matrix B
-impl<T, MA, N, NB> Mul<Matrix<T, N, NB>> for Matrix<T, MA, N>
-where
-    T: Num + Default + Copy + std::iter::Sum<T>,
-    MA: Nat + Val,
-    N: Nat + Val,
-    NB: Nat + Val,
-{
-    type Output = Matrix<T, MA, NB>;
-
-    fn mul(self, other: Matrix<T, N, NB>) -> Self::Output {
-        let mut new = Matrix::new();
-        for (i, row) in self.iter_rows().enumerate() {
-            let row = row.collect::<Vec<_>>();
-            for (j, col) in other.iter_cols().enumerate() {
-                new[(i, j)] = row.iter().zip(col).map(|(r, c)| **r * *c).sum();
-            }
-        }
-        new
     }
 }
 
