@@ -1,7 +1,8 @@
 #![cfg(test)]
 
 use super::*;
-use crate::{matrix, utils::typelevel_nums::*};
+
+use crate::{matrix, primitives::approx_eq::ApproxEq, utils::typelevel_nums::*};
 
 #[test]
 fn iter() {

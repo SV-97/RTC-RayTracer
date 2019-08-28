@@ -81,7 +81,7 @@ where
 /// Yes this should be N-Dim (the N3 and N4 implementations are in fact that) but
 /// Rust won't accept my inductive definition and after wasting two hours this is
 /// just became a trait and got seperate implementations for the sizes I need.
-trait Determinant<T, M> {
+pub trait Determinant<T, M> {
     /// Calculate the minor(determinant of the submatrix) of a MxM matrix at (i,j)
     fn minor(&self, i: usize, j: usize) -> T;
     /// Calculate the cofactor of a MxM matrix at (i, j)
