@@ -12,8 +12,8 @@ pub fn draw_clockface() -> std::io::Result<()> {
     let top = point(0., origin.y() / 2., 0.);
     for i in 0..12 {
         let pos = top
-            .rotate_z(i as f64 * consts::PI / 6.)
-            .translate(origin.x(), origin.y(), 0.);
+            .rotated_z(i as f64 * consts::PI / 6.)
+            .translated(origin.x(), origin.y(), 0.);
         let _ = canvas
             .draw_block(
                 pos.x().round() as usize,

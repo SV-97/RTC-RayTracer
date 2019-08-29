@@ -99,19 +99,19 @@ where
     T: Num + Default + Copy + std::iter::Sum<T>,
 {
     /// Translate in space
-    pub fn translate(&self, x: T, y: T, z: T) -> Self {
+    pub fn translated(&self, x: T, y: T, z: T) -> Self {
         let a = Matrix::new_translation(x, y, z);
         a * self.clone()
     }
 
     /// Scale (in relation to the origin)
-    pub fn scale(&self, x: T, y: T, z: T) -> Self {
+    pub fn scaled(&self, x: T, y: T, z: T) -> Self {
         let a = Matrix::new_scaling(x, y, z);
         a * self.clone()
     }
 
     /// Shear: x in proportion to y, x in proportion to z
-    pub fn shear(&self, xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> Self {
+    pub fn sheared(&self, xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> Self {
         let a = Matrix::new_shear(xy, xz, yx, yz, zx, zy);
         a * self.clone()
     }
@@ -122,19 +122,19 @@ where
     T: Float + Default + Copy + std::iter::Sum<T>,
 {
     /// Rotate around the x axis by r radians
-    pub fn rotate_x(&self, r: T) -> Self {
+    pub fn rotated_x(&self, r: T) -> Self {
         let a = Matrix::new_x_rotation(r);
         a * self.clone()
     }
 
     /// Rotate around the y axis by r radians
-    pub fn rotate_y(&self, r: T) -> Self {
+    pub fn rotated_y(&self, r: T) -> Self {
         let a = Matrix::new_y_rotation(r);
         a * self.clone()
     }
 
     /// Rotate around the x axis by z radians
-    pub fn rotate_z(&self, r: T) -> Self {
+    pub fn rotated_z(&self, r: T) -> Self {
         let a = Matrix::new_z_rotation(r);
         a * self.clone()
     }
@@ -145,48 +145,47 @@ where
     T: Num + Default + Copy + std::iter::Sum<T>,
 {
     /// Translate in space
-    pub fn translate_mut(&mut self, x: T, y: T, z: T) -> &mut Self {
+    pub fn translate(&mut self, x: T, y: T, z: T) -> &mut Self {
         let new = Matrix::new_translation(x, y, z) * &*self;
         replace(self, new);
         self
     }
 
     /// Scale (in relation to the origin)
-    pub fn scale_mut(&mut self, x: T, y: T, z: T) -> &mut Self {
+    pub fn scale(&mut self, x: T, y: T, z: T) -> &mut Self {
         let new = Matrix::new_scaling(x, y, z) * &*self;
         replace(self, new);
         self
     }
 
     /// Shear: x in proportion to y, x in proportion to z
-    pub fn shear_mut(&mut self, xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> &mut Self {
+    pub fn shear(&mut self, xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> &mut Self {
         let new = Matrix::new_shear(xy, xz, yx, yz, zx, zy) * &*self;
         replace(self, new);
         self
     }
 }
 
-
 impl<T> Vec4D<T>
 where
     T: Float + Default + Copy + std::iter::Sum<T>,
 {
     /// Rotate around the x axis by r radians
-    pub fn rotate_x_mut(&mut self, r: T) -> &mut Self {
+    pub fn rotate_x(&mut self, r: T) -> &mut Self {
         let new = Matrix::new_x_rotation(r) * &*self;
         replace(self, new);
         self
     }
 
     /// Rotate around the y axis by r radians
-    pub fn rotate_y_mut(&mut self, r: T) -> &mut Self {
+    pub fn rotate_y(&mut self, r: T) -> &mut Self {
         let new = Matrix::new_y_rotation(r) * &*self;
         replace(self, new);
         self
     }
 
     /// Rotate around the x axis by z radians
-    pub fn rotate_z_mut(&mut self, r: T) -> &mut Self {
+    pub fn rotate_z(&mut self, r: T) -> &mut Self {
         let new = Matrix::new_z_rotation(r) * &*self;
         replace(self, new);
         self
@@ -198,17 +197,17 @@ where
     T: Float + Default + Copy + std::iter::Sum<T>,
 {
     /// Rotate around the x axis by r radians
-    pub fn and_rotate_x(self, r: T) -> Self {
+    pub fn rotated_x(self, r: T) -> Self {
         Matrix::new_x_rotation(r) * self
     }
 
     /// Rotate around the y axis by r radians
-    pub fn and_rotate_y(self, r: T) -> Self {
+    pub fn rotated_y(self, r: T) -> Self {
         Matrix::new_y_rotation(r) * self
     }
 
     /// Rotate around the x axis by z radians
-    pub fn and_rotate_z(self, r: T) -> Self {
+    pub fn rotated_z(self, r: T) -> Self {
         Matrix::new_z_rotation(r) * self
     }
 }
@@ -218,18 +217,70 @@ where
     T: Num + Default + Copy + std::iter::Sum<T>,
 {
     /// Translate in space
-    pub fn and_translate(self, x: T, y: T, z: T) -> Self {
+    pub fn translated(self, x: T, y: T, z: T) -> Self {
         Matrix::new_translation(x, y, z) * self
     }
 
     /// Scale (in relation to the origin)
-    pub fn and_scale(self, x: T, y: T, z: T) -> Self {
+    pub fn scaled(self, x: T, y: T, z: T) -> Self {
         Matrix::new_scaling(x, y, z) * self
     }
 
     /// Shear: x in proportion to y, x in proportion to z
-    pub fn and_shear(self, xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> Self {
+    pub fn sheared(self, xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> Self {
         Matrix::new_shear(xy, xz, yx, yz, zx, zy) * self
+    }
+}
+
+impl<T> Matrix4x4<T>
+where
+    T: Num + Default + Copy + std::iter::Sum<T>,
+{
+    /// Translate in space
+    pub fn translate(&mut self, x: T, y: T, z: T) -> &mut Self {
+        let new = Matrix::new_translation(x, y, z) * &*self;
+        replace(self, new);
+        self
+    }
+
+    /// Scale (in relation to the origin)
+    pub fn scale(&mut self, x: T, y: T, z: T) -> &mut Self {
+        let new = Matrix::new_scaling(x, y, z) * &*self;
+        replace(self, new);
+        self
+    }
+
+    /// Shear: x in proportion to y, x in proportion to z
+    pub fn shear(&mut self, xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> &mut Self {
+        let new = Matrix::new_shear(xy, xz, yx, yz, zx, zy) * &*self;
+        replace(self, new);
+        self
+    }
+}
+
+impl<T> Matrix4x4<T>
+where
+    T: Float + Default + Copy + std::iter::Sum<T>,
+{
+    /// Rotate around the x axis by r radians
+    pub fn rotate_x(&mut self, r: T) -> &mut Self {
+        let new = Matrix::new_x_rotation(r) * &*self;
+        replace(self, new);
+        self
+    }
+
+    /// Rotate around the y axis by r radians
+    pub fn rotate_y(&mut self, r: T) -> &mut Self {
+        let new = Matrix::new_y_rotation(r) * &*self;
+        replace(self, new);
+        self
+    }
+
+    /// Rotate around the x axis by z radians
+    pub fn rotate_z(&mut self, r: T) -> &mut Self {
+        let new = Matrix::new_z_rotation(r) * &*self;
+        replace(self, new);
+        self
     }
 }
 
@@ -243,7 +294,7 @@ mod tests {
     #[test]
     fn translate_point() {
         let p = point(-3., 4., 5.);
-        assert!(p.translate(5., -3., 2.).approx_eq(&point(2., 1., 7.)));
+        assert!(p.translated(5., -3., 2.).approx_eq(&point(2., 1., 7.)));
         let t = Matrix::new_translation(5., -3., 2.).invert().unwrap();
         assert!((t * p).approx_eq(&point(-8., 7., 3.)));
     }
@@ -251,19 +302,19 @@ mod tests {
     #[test]
     fn translate_vec() {
         let p = vector(-3., 4., 5.);
-        assert!(p.translate(5., -3., 2.).approx_eq(&vector(-3., 4., 5.)));
+        assert!(p.translated(5., -3., 2.).approx_eq(&vector(-3., 4., 5.)));
     }
 
     #[test]
     fn scale_point() {
         let p = point(-4., 6., 8.);
-        assert!(p.scale(2., 3., 4.).approx_eq(&point(-8., 18., 32.)));
+        assert!(p.scaled(2., 3., 4.).approx_eq(&point(-8., 18., 32.)));
     }
 
     #[test]
     fn scale_vector() {
         let v = vector(-4., 6., 8.);
-        assert!(v.scale(2., 3., 4.).approx_eq(&vector(-8., 18., 32.)));
+        assert!(v.scaled(2., 3., 4.).approx_eq(&vector(-8., 18., 32.)));
         let t = Matrix::new_scaling(2., 3., 4.).invert().unwrap();
         assert!((t * v).approx_eq(&vector(-2., 2., 2.)));
     }
@@ -271,7 +322,7 @@ mod tests {
     #[test]
     fn relection_scale() {
         let p = point(2, 3, 4);
-        assert_eq!(p.scale(-1, 1, 1), point(-2, 3, 4));
+        assert_eq!(p.scaled(-1, 1, 1), point(-2, 3, 4));
     }
 
     #[test]
@@ -283,7 +334,7 @@ mod tests {
             consts::SQRT_2 / 2.,
             consts::SQRT_2 / 2.
         )));
-        assert!(p.rotate_x(consts::FRAC_PI_2).approx_eq(&point(0., 0., 1.)));
+        assert!(p.rotated_x(consts::FRAC_PI_2).approx_eq(&point(0., 0., 1.)));
     }
 
     #[test]
@@ -295,7 +346,7 @@ mod tests {
             0.,
             consts::SQRT_2 / 2.
         )));
-        assert!(p.rotate_y(consts::FRAC_PI_2).approx_eq(&point(1., 0., 0.)));
+        assert!(p.rotated_y(consts::FRAC_PI_2).approx_eq(&point(1., 0., 0.)));
     }
 
     #[test]
@@ -307,29 +358,29 @@ mod tests {
             consts::SQRT_2 / 2.,
             0.
         )));
-        assert!(p.rotate_z(consts::FRAC_PI_2).approx_eq(&point(-1., 0., 0.)));
+        assert!(p.rotated_z(consts::FRAC_PI_2).approx_eq(&point(-1., 0., 0.)));
     }
 
     #[test]
     fn shear() {
         let p = point(2., 3., 4.);
         assert!(p
-            .shear(1., 0., 0., 0., 0., 0.)
+            .sheared(1., 0., 0., 0., 0., 0.)
             .approx_eq(&point(5., 3., 4.)));
         assert!(p
-            .shear(0., 1., 0., 0., 0., 0.)
+            .sheared(0., 1., 0., 0., 0., 0.)
             .approx_eq(&point(6., 3., 4.)));
         assert!(p
-            .shear(0., 0., 1., 0., 0., 0.)
+            .sheared(0., 0., 1., 0., 0., 0.)
             .approx_eq(&point(2., 5., 4.)));
         assert!(p
-            .shear(0., 0., 0., 1., 0., 0.)
+            .sheared(0., 0., 0., 1., 0., 0.)
             .approx_eq(&point(2., 7., 4.)));
         assert!(p
-            .shear(0., 0., 0., 0., 1., 0.)
+            .sheared(0., 0., 0., 0., 1., 0.)
             .approx_eq(&point(2., 3., 6.)));
         assert!(p
-            .shear(0., 0., 0., 0., 0., 1.)
+            .sheared(0., 0., 0., 0., 0., 1.)
             .approx_eq(&point(2., 3., 7.)));
     }
 }

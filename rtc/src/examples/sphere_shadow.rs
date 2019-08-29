@@ -18,7 +18,7 @@ use std::f64::consts;
 pub fn sphere_shadow() -> std::io::Result<()> {
     let mut canvas = Canvas::<N900, N900>::new();
     let mut sphere = Sphere::default();
-    let transforms = Transformation::new_scaling(200., 200., 200.).and_translate(450., 450., 250.);
+    let transforms = Transformation::new_scaling(200., 200., 200.).translated(450., 450., 250.);
 
     sphere.set_transform(transforms);
     let pen = Pixel::from((40, 200, 220));
