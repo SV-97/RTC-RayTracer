@@ -8,5 +8,5 @@ pub use material::*;
 mod lights;
 mod material;
 
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;

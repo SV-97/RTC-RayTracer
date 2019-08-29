@@ -1,7 +1,11 @@
 use std::cell::Ref;
 use std::ops::Index;
 
-use crate::primitives::{approx_eq::ApproxEq, ray::Ray, vector::Transformation};
+use crate::primitives::{
+    approx_eq::ApproxEq,
+    ray::Ray,
+    vector::Transformation,
+};
 
 pub trait Shape<'a>
 where
