@@ -50,6 +50,10 @@ impl Pixel {
     pub fn white() -> Self {
         Pixel::new_rgb(1.0, 1.0, 1.0)
     }
+
+    pub fn black() -> Self {
+        Pixel::new_rgb(0.0, 0.0, 0.0)
+    }
 }
 
 impl From<(u8, u8, u8)> for Pixel {
