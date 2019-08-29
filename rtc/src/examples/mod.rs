@@ -2,3 +2,4 @@
 pub mod clock;
 pub mod projectile;
 pub mod sphere_shadow;
+pub mod sphere_rendering;

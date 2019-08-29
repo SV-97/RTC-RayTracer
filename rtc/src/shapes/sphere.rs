@@ -15,10 +15,19 @@ use super::prelude::*;
 pub struct Sphere {
     transformation: Transformation,
     inverse_transformation: RefCell<Option<Transformation>>,
-    material: Material,
+    pub material: Material,
 }
 
 impl Sphere {
+    pub fn new(material: Material, transformation: Transformation) -> Self {
+        Self {
+            material,
+            transformation,
+            inverse_transformation: RefCell::new(None),
+        }
+
+    }
+
     /// Calculate the normal vector for any point on the sphere
     pub fn normal_at(&self, point: &Point) -> Vec3D {
         let mut object_point = None;
