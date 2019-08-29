@@ -6,6 +6,7 @@ mod examples;
 #[allow(dead_code)]
 mod primitives;
 mod profile;
+mod shading;
 mod shapes;
 mod utils;
 

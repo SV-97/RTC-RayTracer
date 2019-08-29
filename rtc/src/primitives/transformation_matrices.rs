@@ -358,7 +358,9 @@ mod tests {
             consts::SQRT_2 / 2.,
             0.
         )));
-        assert!(p.rotated_z(consts::FRAC_PI_2).approx_eq(&point(-1., 0., 0.)));
+        assert!(p
+            .rotated_z(consts::FRAC_PI_2)
+            .approx_eq(&point(-1., 0., 0.)));
     }
 
     #[test]

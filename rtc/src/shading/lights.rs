@@ -1,31 +1,16 @@
-use crate::primitives::vector::{point, Point};
 use super::Color;
+use crate::primitives::vector::Point;
 
 pub struct PointLight {
-    intensity: Color,
-    position: Point,
+    pub intensity: Color,
+    pub position: Point,
 }
 
 impl PointLight {
-    pub fn new(point: Point, intensity: Color) {
+    pub fn new(position: Point, intensity: Color) -> Self {
         PointLight {
-            point,
             intensity,
+            position,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::assert_approx_eq;
-
-    #[test]
-    fn new() {
-        let i = Color::new_rgb(1., 1., 1.);
-        let p = Point::origin();
-        let light = PointLight::new(p.clone(), i.clone());
-        assert_approx_eq!(light.intensity, &i);
-        assert_approx_eq!(light.position, &p);
     }
 }
