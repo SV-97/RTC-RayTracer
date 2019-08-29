@@ -1,10 +1,10 @@
-use std::ops::Index;
 use std::cell::{Ref, RefCell};
+use std::ops::Index;
 
 use crate::primitives::{
     approx_eq::ApproxEq,
     ray::Ray,
-    vector::{point, ScalarProd, Transformation},
+    vector::{Point, ScalarProd, Transformation, Vec3D},
 };
 
 pub trait Shape<'a>
@@ -15,6 +15,8 @@ where
     fn set_transform(&mut self, transformation: Transformation);
     /// Get the transformation of a shape
     fn get_transform(&'a self) -> &'a Transformation;
+    /// Get the transformation of a shape mutably
+    fn get_transform_mut(&'a mut self) -> &'a mut Transformation;
     /// Find all intersections of a shape with a ray if there are some
     fn intersect(&'a self, ray: &Ray) -> Option<Intersections<'a, Self>>;
     /// Get the inversed transformation - should be cached internally
@@ -129,6 +131,27 @@ pub struct Sphere {
     inverse_transformation: RefCell<Option<Transformation>>,
 }
 
+impl Sphere {
+    /// Calculate the normal vector for any point on the sphere
+    pub fn normal_at(&self, point: &Point) -> Vec3D {
+        let mut object_point = None;
+        let mut world_transform = None;
+        Ref::map(self.get_inverse_transform(), |inverse| {
+            object_point = Some(inverse * point);
+            world_transform = Some(inverse.transpose());
+            inverse
+        });
+        if let (Some(object_point), Some(world_transform)) = (object_point, world_transform) {
+            let object_normal = object_point - Point::origin();
+            let mut out = world_transform * object_normal;
+            out.set_w(0.0);
+            out.unit()
+        } else {
+            unreachable!()
+        }
+    }
+}
+
 impl Default for Sphere {
     fn default() -> Self {
         Sphere {
@@ -155,7 +178,7 @@ impl<'a> Shape<'a> for Sphere {
         let mut out = None;
         Ref::map(self.get_inverse_transform(), |inverse| {
             let ray2 = ray.transform(inverse);
-            let sphere_to_ray = (&ray2.origin) - point(0., 0., 0.);
+            let sphere_to_ray = (&ray2.origin) - Point::origin();
             let a = (&ray2.direction).scalar_prod(&ray2.direction);
             let b = 2.0 * (&ray2.direction).scalar_prod(&sphere_to_ray);
             let c = (&sphere_to_ray).scalar_prod(&sphere_to_ray) - 1.0;
@@ -189,8 +212,20 @@ impl<'a> Shape<'a> for Sphere {
     }
 
     fn get_inverse_transform(&'a self) -> Ref<'a, Transformation> {
-        self.inverse_transformation.borrow_mut().get_or_insert_with(|| self.transformation.invert().expect("Encountered uninvertable matrix"));
-        Ref::map(self.inverse_transformation.borrow(), |opt_ref| opt_ref.as_ref().unwrap())
+        self.inverse_transformation
+            .borrow_mut()
+            .get_or_insert_with(|| {
+                self.transformation
+                    .invert()
+                    .expect("Encountered uninvertable matrix")
+            });
+        Ref::map(self.inverse_transformation.borrow(), |opt_ref| {
+            opt_ref.as_ref().unwrap()
+        })
+    }
+    fn get_transform_mut(&'a mut self) -> &'a mut Transformation {
+        self.inverse_transformation.replace(None);
+        &mut self.transformation
     }
 }
 
@@ -225,7 +260,7 @@ mod tests {
     #[test]
     fn intersect_ray_sphere_inside() {
         let s = Sphere::default();
-        let ray = Ray::new(point(0., 0., 0.), vector(0., 0., 1.));
+        let ray = Ray::new(Point::origin(), vector(0., 0., 1.));
         let is = s.intersect(&ray).unwrap();
         assert_eq!(is.len(), 2);
         assert_approx_eq!(is[0], &Intersection::new(-1.0, &s));
@@ -314,5 +349,62 @@ mod tests {
         s.set_transform(t.clone());
         let is = s.intersect(&r);
         assert!(is.is_none());
+    }
+
+    #[test]
+    fn normal_on_x_axis() {
+        let s = Sphere::default();
+        let n = s.normal_at(&point(1., 0., 0.));
+        assert_approx_eq!(n, &vector(1., 0., 0.));
+    }
+
+    #[test]
+    fn normal_on_y_axis() {
+        let s = Sphere::default();
+        let n = s.normal_at(&point(0., 1., 0.));
+        assert_approx_eq!(n, &vector(0., 1., 0.));
+    }
+
+    #[test]
+    fn normal_on_z_axis() {
+        let s = Sphere::default();
+        let n = s.normal_at(&point(0., 0., 1.));
+        assert_approx_eq!(n, &vector(0., 0., 1.));
+    }
+
+    #[test]
+    fn normal_nonaxial() {
+        let s = Sphere::default();
+        let v = (3.0_f64).sqrt() / 3.;
+        let n = s.normal_at(&point(v, v, v));
+        assert_approx_eq!(n, &vector(v, v, v));
+    }
+
+    #[test]
+    fn normal_normalization() {
+        let s = Sphere::default();
+        let v = (3.0_f64).sqrt() / 3.;
+        let n = s.normal_at(&point(v, v, v));
+        assert_approx_eq!(n, &n.clone().unit());
+    }
+
+    #[test]
+    fn normal_of_translated_sphere() {
+        let mut s = Sphere::default();
+        s.get_transform_mut().translate(0., 1., 0.);
+        let n = s.normal_at(&point(0., 1.70711, -0.70711));
+        assert_approx_eq!(n, &vector(0., 0.70711, -0.70711));
+    }
+
+    #[test]
+    fn normal_of_transformed_sphere() {
+        use std::f64::consts;
+        let mut s = Sphere::default();
+        s.get_transform_mut()
+            .rotate_z(consts::PI / 5.)
+            .scale(1., 0.5, 1.);
+        let a = consts::SQRT_2 / 2.0;
+        let n = s.normal_at(&point(0., a, -a));
+        assert_approx_eq!(n, &vector(0., 0.97014, -0.24254));
     }
 }

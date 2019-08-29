@@ -33,6 +33,19 @@ pub fn point<T: Num>(x: T, y: T, z: T) -> Vec4D<T> {
     vec4![x, y, z, T::one()]
 }
 
+impl Point {
+    pub fn origin() -> Self {
+        point(0., 0., 0.)
+    }
+}
+
+impl Vec3D {
+    /// Reflect a vector along a normal vector ("Bounce it")
+    pub fn reflect(&self, normal: &Self) -> Self {
+        self - (normal * 2.0 * self.scalar_prod(normal))
+    }
+}
+
 impl<T: Copy> Vec4D<T> {
     pub fn x(&self) -> T {
         self[(0, 0)]
@@ -48,6 +61,22 @@ impl<T: Copy> Vec4D<T> {
 
     pub fn w(&self) -> T {
         self[(3, 0)]
+    }
+
+    pub fn set_x(&mut self, v: T) {
+        self[(0, 0)] = v;
+    }
+
+    pub fn set_y(&mut self, v: T) {
+        self[(1, 0)] = v;
+    }
+
+    pub fn set_z(&mut self, v: T) {
+        self[(2, 0)] = v;
+    }
+
+    pub fn set_w(&mut self, v: T) {
+        self[(3, 0)] = v;
     }
 }
 
@@ -120,7 +149,7 @@ impl<T: Num + Copy + Default + std::iter::Sum<T>> Vec4D<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{matrix, primitives::approx_eq::ApproxEq};
+    use crate::{assert_approx_eq, matrix, primitives::approx_eq::ApproxEq};
 
     #[test]
     fn scalar_prod() {
@@ -175,5 +204,22 @@ mod tests {
         let b = vector(2, 3, 4);
         let c = vec4![2, 3, 4, 0];
         assert_eq!(a * b, c);
+    }
+
+    #[test]
+    fn reflect() {
+        let v = vector(1., -1., 0.);
+        let n = vector(0., 1., 0.);
+        let r = v.reflect(&n);
+        assert_approx_eq!(r, &vector(1., 1., 0.));
+    }
+
+    #[test]
+    fn reflect_slanted() {
+        let v = vector(0., -1., 0.);
+        let a = std::f64::consts::SQRT_2 / 2.0;
+        let n = vector(a, a, 0.);
+        let r = v.reflect(&n);
+        assert_approx_eq!(r, &vector(1., 0., 0.));
     }
 }
