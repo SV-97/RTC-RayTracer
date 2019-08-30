@@ -4,7 +4,7 @@ use crate::{
         vector::{point, Transformation},
     },
     shading::{Color, Material, PointLight},
-    shapes::{Intersection, Intersections, PreComp, Shape, Sphere},
+    shapes::{Intersections, PreComp, Shape, Sphere},
 };
 
 pub struct World {
@@ -22,7 +22,7 @@ impl World {
     }
 
     /// Find the intersections of a ray with all objects in the scene sorted by their t-value
-    pub fn intersect<'a>(&'a self, ray: &'a Ray) -> Vec<Intersection<'a, Sphere>> {
+    pub fn intersect<'a>(&'a self, ray: &'a Ray) -> Intersections<'a, Sphere> {
         let mut v = self
             .objects
             .iter()
@@ -31,7 +31,7 @@ impl World {
             .flatten()
             .collect::<Vec<_>>();
         v.sort_unstable_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
-        v
+        Intersections::new(v)
     }
 
     pub fn shade_hit<'a, T: Shape<'a>>(&self, comp: &PreComp<'a, T>) -> Color {
@@ -45,6 +45,17 @@ impl World {
                 None => Some(new_color),
             })
             .unwrap()
+    }
+
+    pub fn color_at(&self, ray: &Ray) -> Color {
+        let is = self.intersect(ray);
+        match is.hit() {
+            Some(hit) => {
+                let precomp = hit.clone().prepare_computations(ray);
+                self.shade_hit(&precomp)
+            }
+            None => Color::black(),
+        }
     }
 }
 
