@@ -15,7 +15,7 @@ use super::prelude::*;
 pub struct Sphere {
     transformation: Transformation,
     inverse_transformation: RefCell<Option<Transformation>>,
-    pub material: Material,
+    material: Material,
 }
 
 impl Sphere {
@@ -24,26 +24,6 @@ impl Sphere {
             material,
             transformation,
             inverse_transformation: RefCell::new(None),
-        }
-
-    }
-
-    /// Calculate the normal vector for any point on the sphere
-    pub fn normal_at(&self, point: &Point) -> Vec3D {
-        let mut object_point = None;
-        let mut world_transform = None;
-        Ref::map(self.get_inverse_transform(), |inverse| {
-            object_point = Some(inverse * point);
-            world_transform = Some(inverse.transpose());
-            inverse
-        });
-        if let (Some(object_point), Some(world_transform)) = (object_point, world_transform) {
-            let object_normal = object_point - Point::origin();
-            let mut out = world_transform * object_normal;
-            out.set_w(0.0);
-            out.unit()
-        } else {
-            unreachable!()
         }
     }
 }
@@ -123,5 +103,28 @@ impl<'a> Shape<'a> for Sphere {
     fn get_transform_mut(&'a mut self) -> &'a mut Transformation {
         self.inverse_transformation.replace(None);
         &mut self.transformation
+    }
+
+    /// Calculate the normal vector for any point on the sphere
+    fn normal_at(&self, point: &Point) -> Vec3D {
+        let mut object_point = None;
+        let mut world_transform = None;
+        Ref::map(self.get_inverse_transform(), |inverse| {
+            object_point = Some(inverse * point);
+            world_transform = Some(inverse.transpose());
+            inverse
+        });
+        if let (Some(object_point), Some(world_transform)) = (object_point, world_transform) {
+            let object_normal = object_point - Point::origin();
+            let mut out = world_transform * object_normal;
+            out.set_w(0.0);
+            out.unit()
+        } else {
+            unreachable!()
+        }
+    }
+
+    fn material(&'a self) -> &'a Material {
+        &self.material
     }
 }

@@ -1,10 +1,13 @@
 use std::cell::Ref;
 use std::ops::Index;
 
-use crate::primitives::{
-    approx_eq::ApproxEq,
-    ray::Ray,
-    vector::Transformation,
+use crate::{
+    primitives::{
+        approx_eq::ApproxEq,
+        ray::Ray,
+        vector::{Point, ScalarProd, Transformation, Vec3D},
+    },
+    shading::Material,
 };
 
 pub trait Shape<'a>
@@ -21,6 +24,42 @@ where
     fn intersect(&'a self, ray: &Ray) -> Option<Intersections<'a, Self>>;
     /// Get the inversed transformation - should be cached internally
     fn get_inverse_transform(&'a self) -> Ref<'a, Transformation>;
+    /// Calculate the normal vector at any point on the shape
+    fn normal_at(&self, point: &Point) -> Vec3D;
+    /// Get the material applied to the shape
+    fn material(&'a self) -> &'a Material;
+}
+
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
+pub struct PreComp<'a, T>
+where
+    T: Shape<'a>,
+{
+    pub point: Point,
+    pub eye: Vec3D,
+    pub normal: Vec3D,
+    pub t: f64,
+    pub object: &'a T,
+    pub inside: bool,
+}
+
+impl<'a, T: Shape<'a>> PreComp<'a, T> {
+    pub fn new(
+        point: Point,
+        eye: Vec3D,
+        normal: Vec3D,
+        intersection: Intersection<'a, T>,
+        inside: bool,
+    ) -> Self {
+        PreComp {
+            point,
+            eye,
+            normal,
+            t: intersection.t,
+            object: intersection.object,
+            inside,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
@@ -38,6 +77,17 @@ where
 {
     pub fn new(t: f64, object: &'a T) -> Self {
         Intersection { t, object }
+    }
+
+    pub fn prepare_computations(self, ray: &Ray) -> PreComp<'a, T> {
+        let point = ray.position(self.t);
+        let eye = -ray.direction.clone();
+        let mut normal = self.object.normal_at(&point);
+        let inside = (&normal).scalar_prod(&eye) < 0.;
+        if inside {
+            normal = -normal;
+        }
+        PreComp::new(point, eye, normal, self, inside)
     }
 }
 
@@ -98,6 +148,14 @@ where
                 None
             }
         })
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Intersection<'a, T>> {
+        self.is.iter()
+    }
+
+    pub fn into_iter(self) -> impl Iterator<Item = Intersection<'a, T>> {
+        self.is.into_iter()
     }
 }
 

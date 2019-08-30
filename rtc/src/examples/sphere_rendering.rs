@@ -63,7 +63,7 @@ pub fn sphere_rendering_parallel() -> std::io::Result<()> {
                                     let normal = sphere.normal_at(&point);
                                     let eye = -r.direction;
                                     let color =
-                                        l1.lighting(&sphere.material, &point, &eye, &normal);
+                                        l1.lighting(sphere.material(), &point, &eye, &normal);
                                     pixels.push((*x, y, color));
                                 }
                             });
@@ -118,7 +118,7 @@ pub fn sphere_rendering() -> std::io::Result<()> {
                     let point = r.position(hit.t);
                     let normal = sphere.normal_at(&point);
                     let eye = -r.direction;
-                    let color = l1.lighting(&sphere.material, &point, &eye, &normal);
+                    let color = l1.lighting(sphere.material(), &point, &eye, &normal);
                     canvas.draw(x, y, color).expect("This should've happened.");
                 }
             });
