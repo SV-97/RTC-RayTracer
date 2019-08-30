@@ -178,3 +178,34 @@ fn normal_of_transformed_sphere() {
     let n = s.normal_at(&point(0., a, -a));
     assert_approx_eq!(n, &vector(0., 0.97014, -0.24254));
 }
+
+#[test]
+fn precompute_intersection() {
+    let r = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
+    let shape = Sphere::default();
+    let i = Intersection::new(4., &shape);
+    let comps = (i.clone()).prepare_computations(&r);
+    assert_approx_eq!(comps.t, i.t);
+    assert_approx_eq!(comps.object, &shape);
+    assert_approx_eq!(comps.point, &point(0., 0., -1.));
+    assert_approx_eq!(comps.eye, &vector(0., 0., -1.));
+    assert_approx_eq!(comps.normal, &vector(0., 0., -1.));
+}
+
+#[test]
+fn precompute_inside() {
+    let r = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
+    let shape = Sphere::default();
+    let i = Intersection::new(4., &shape);
+    let comps = i.prepare_computations(&r);
+    assert!(!comps.inside);
+
+    let r = Ray::new(point(0., 0., 0.), vector(0., 0., 1.));
+    let shape = Sphere::default();
+    let i = Intersection::new(1., &shape);
+    let comps = i.prepare_computations(&r);
+    assert_approx_eq!(comps.point, &point(0., 0., 1.));
+    assert_approx_eq!(comps.eye, &vector(0., 0., -1.));
+    assert!(comps.inside);
+    assert_approx_eq!(comps.normal, &vector(0., 0., -1.));
+}
