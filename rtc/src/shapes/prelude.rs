@@ -28,6 +28,8 @@ where
     fn normal_at(&self, point: &Point) -> Vec3D;
     /// Get the material applied to the shape
     fn material(&'a self) -> &'a Material;
+    /// Get the material applied to the shape mutably
+    fn material_mut(&'a mut self) -> &'a mut Material;
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]

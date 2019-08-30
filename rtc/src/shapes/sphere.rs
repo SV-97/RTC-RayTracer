@@ -127,4 +127,8 @@ impl<'a> Shape<'a> for Sphere {
     fn material(&'a self) -> &'a Material {
         &self.material
     }
+
+    fn material_mut(&'a mut self) -> &'a mut Material {
+        &mut self.material
+    }
 }
