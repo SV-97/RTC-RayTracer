@@ -59,9 +59,9 @@ impl<WIDTH: Nat + Val, HEIGHT: Nat + Val> Canvas<WIDTH, HEIGHT> {
             let row_buf = row.fold(vec![], |mut row_buf, pixel| {
                 row_buf.push(format!(
                     "{} {} {}",
-                    clamp_and_normalize(pixel.r),
-                    clamp_and_normalize(pixel.g),
-                    clamp_and_normalize(pixel.b)
+                    clamp_and_normalize(pixel.r, 255),
+                    clamp_and_normalize(pixel.g, 255),
+                    clamp_and_normalize(pixel.b, 255)
                 ));
                 row_buf
             });
@@ -78,9 +78,9 @@ impl<WIDTH: Nat + Val, HEIGHT: Nat + Val> Canvas<WIDTH, HEIGHT> {
     }
 }
 
-/// Clamp the value to the range from 0 to 1 and then map that range onto 0 to 255
-fn clamp_and_normalize(num: f32) -> u8 {
-    ((clamp(num, 0.0, 1.0) * 255.0).round() as i64)
+/// Clamp the value to the range from 0.0 to 1.0 and then map that range onto 0 to max
+fn clamp_and_normalize(num: f32, max: usize) -> usize {
+    ((clamp(num, 0.0, 1.0) * max as f32).round() as i64)
         .try_into()
         .unwrap()
 }
