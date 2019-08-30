@@ -104,7 +104,7 @@ impl<T: Num + Copy + Default + std::iter::Sum<T>> ScalarProd<&Self> for Vec4D<T>
     }
 }
 
-/// &v1 * &v2
+/// &v1 * v2
 impl<T: Num + Copy + Default + std::iter::Sum<T>> ScalarProd<Vec4D<T>> for &Vec4D<T> {
     type Output = T;
     fn scalar_prod(self, other: Vec4D<T>) -> Self::Output {
@@ -113,6 +113,7 @@ impl<T: Num + Copy + Default + std::iter::Sum<T>> ScalarProd<Vec4D<T>> for &Vec4
     }
 }
 
+/// &v1 * &v2
 impl<T: Num + Copy + Default + std::iter::Sum<T>> ScalarProd for &Vec4D<T> {
     type Output = T;
     fn scalar_prod(self, other: Self) -> Self::Output {
@@ -121,16 +122,62 @@ impl<T: Num + Copy + Default + std::iter::Sum<T>> ScalarProd for &Vec4D<T> {
     }
 }
 
-impl<T: Num + Copy + Default + std::iter::Sum<T>> Vec4D<T> {
+pub trait CrossProd<Rhs = Self> {
+    type Output;
     /// Cross product between two vectors
-    pub fn cross(self, other: Self) -> Self {
+    fn cross(self, other: Rhs) -> Self::Output;
+
+}
+
+/// v1 x v2
+impl<T: Num + Copy + Default + std::iter::Sum<T>> CrossProd for Vec4D<T> {
+    type Output = Vec4D<T>;
+    fn cross(self, other: Self) -> Self::Output {
         vector(
             self.y() * other.z() - self.z() * other.y(),
             self.z() * other.x() - self.x() * other.z(),
             self.x() * other.y() - self.y() * other.x(),
         )
     }
+}
 
+/// v1 x &v2
+impl<T: Num + Copy + Default + std::iter::Sum<T>> CrossProd<&Self> for Vec4D<T> {
+    type Output = Vec4D<T>;
+    fn cross(self, other: Self) -> Self::Output {
+        vector(
+            self.y() * other.z() - self.z() * other.y(),
+            self.z() * other.x() - self.x() * other.z(),
+            self.x() * other.y() - self.y() * other.x(),
+        )
+    }
+}
+
+/// &v1 x v2
+impl<T: Num + Copy + Default + std::iter::Sum<T>> CrossProd<Vec4D<T>> for &Vec4D<T> {
+    type Output = Vec4D<T>;
+    fn cross(self, other: Self) -> Self::Output {
+        vector(
+            self.y() * other.z() - self.z() * other.y(),
+            self.z() * other.x() - self.x() * other.z(),
+            self.x() * other.y() - self.y() * other.x(),
+        )
+    }
+}
+
+/// &v1 x &v2
+impl<T: Num + Copy + Default + std::iter::Sum<T>> CrossProd for &Vec4D<T> {
+    type Output = Vec4D<T>;
+    fn cross(self, other: Self) -> Self::Output {
+        vector(
+            self.y() * other.z() - self.z() * other.y(),
+            self.z() * other.x() - self.x() * other.z(),
+            self.x() * other.y() - self.y() * other.x(),
+        )
+    }
+}
+
+impl<T: Num + Copy + Default + std::iter::Sum<T>> Vec4D<T> {
     /// x direction unit vector
     pub fn unit_x() -> Self {
         vector(T::one(), T::zero(), T::zero())
