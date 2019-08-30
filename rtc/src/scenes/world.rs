@@ -9,16 +9,16 @@ use crate::{
 
 pub struct World {
     pub objects: Vec<Sphere>,
-    pub light: PointLight,
+    pub lights: Vec<PointLight>,
 }
 
 impl World {
-    pub fn new(objects: Vec<Sphere>, light: PointLight) -> Self {
-        World { objects, light }
+    pub fn new(objects: Vec<Sphere>, lights: Vec<PointLight>) -> Self {
+        World { objects, lights }
     }
 
     pub fn new_empty() -> Self {
-        Self::new(vec![], PointLight::default())
+        Self::new(vec![], vec![])
     }
 
     /// Find the intersections of a ray with all objects in the scene sorted by their t-value
@@ -35,8 +35,16 @@ impl World {
     }
 
     pub fn shade_hit<'a, T: Shape<'a>>(&self, comp: &PreComp<'a, T>) -> Color {
-        self.light
-            .lighting(comp.object.material(), &comp.point, &comp.eye, &comp.normal)
+        self.lights
+            .iter()
+            .map(|light| {
+                light.lighting(comp.object.material(), &comp.point, &comp.eye, &comp.normal)
+            })
+            .fold(None, |blend: Option<Color>, new_color| match blend {
+                Some(blend) => Some(blend.blend(new_color)),
+                None => Some(new_color),
+            })
+            .unwrap()
     }
 }
 
@@ -49,6 +57,6 @@ impl Default for World {
         );
         let mut s2 = Sphere::default();
         s2.get_transform_mut().scale(0.5, 0.5, 0.5);
-        World::new(vec![s1, s2], light)
+        World::new(vec![s1, s2], vec![light])
     }
 }

@@ -36,7 +36,10 @@ fn shade_intersection() {
 #[test]
 fn shade_intersection_inside() {
     let mut w = World::default();
-    w.light = PointLight::new(point(0., 0.25, 0.), Color::new_rgb(1., 1., 1.));
+    w.lights = vec![PointLight::new(
+        point(0., 0.25, 0.),
+        Color::new_rgb(1., 1., 1.),
+    )];
     let r = Ray::new(point(0., 0., 0.), vector(0., 0., 1.));
     let s = &w.objects[1];
     let i = Intersection::new(0.5, s);
