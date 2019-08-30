@@ -23,6 +23,6 @@ impl Material {
 
 impl Default for Material {
     fn default() -> Self {
-        Material::new(Color::new_rgb(1., 1., 1.), 1., 1., 1., 1.)
+        Material::new(Color::new_rgb(1., 1., 1.), 0.1, 0.9, 0.9, 200.)
     }
 }

@@ -43,7 +43,6 @@ fn lighting_eye_up() {
 fn lighting_light_up() {
     let m = Material::default();
     let position = point(0., 0., 0.);
-    let a = consts::SQRT_2 / 2.0;
     let eye = vector(0., 0., -1.);
     let normal = vector(0., 0., -1.);
     let light = PointLight::new(point(0., 10., -10.), Color::new_rgb(1., 1., 1.));

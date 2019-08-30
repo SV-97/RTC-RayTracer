@@ -2,6 +2,7 @@ use crate::primitives::vector::{Point, ScalarProd, Vec3D};
 
 use super::{Color, Material};
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct PointLight {
     pub intensity: Color,
     pub position: Point,
@@ -43,5 +44,11 @@ impl PointLight {
             (diffuse, specular)
         };
         ambient + diffuse + specular
+    }
+}
+
+impl Default for PointLight {
+    fn default() -> Self {
+        PointLight::new(Point::origin(), Color::default())
     }
 }
