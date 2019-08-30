@@ -5,7 +5,11 @@ use num_traits::{Float, Num};
 
 use std::mem::replace;
 
-use crate::{matrix, utils::typelevel_nums::*};
+use crate::{
+    matrix,
+    primitives::vector::{Point, Transformation, Vec3D, CrossProd},
+    utils::typelevel_nums::*,
+};
 
 use super::tmatrix::Matrix;
 use super::vector::Vec4D;
@@ -284,9 +288,27 @@ where
     }
 }
 
+impl Transformation {
+    pub fn new_view(from: &Point, to: &Point, up: &Vec3D) -> Self {
+        let forward = (to - from).unit();
+        let left = (&forward).cross(up.unit());
+        let true_up = (&left).cross(&forward);
+        let orientation = matrix!( N4, N4 =>
+             left.x(),     left.y(),     left.z(),    0.0;
+             true_up.x(),  true_up.y(),  true_up.z(), 0.0;
+            -forward.x(), -forward.y(), -forward.z(), 0.0;
+             0.0,          0.0,          0.0        , 1.0
+        );
+        orientation.translated(-from.x, -from.y, -from.z)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::primitives::vector::{point, vector};
+    use crate::{
+        assert_approx_eq, matrix,
+        primitives::vector::{point, vector},
+    };
     use std::f64::consts;
 
     use super::super::approx_eq::ApproxEq;
@@ -384,5 +406,49 @@ mod tests {
         assert!(p
             .sheared(0., 0., 0., 0., 0., 1.)
             .approx_eq(&point(2., 3., 7.)));
+    }
+
+    #[test]
+    fn default_view() {
+        let from = point(0., 0., 0.);
+        let to = point(0., 0., -1.);
+        let up = vector(0., 1., 0.);
+        let t = Transformation::new_view(&from, &to, &up);
+        assert_approx_eq!(t, Transformation::identity());
+    }
+
+    #[test]
+    fn view_to_positive_z() {
+        let from = point(0., 0., 0.);
+        let to = point(0., 0., 1.);
+        let up = vector(0., 1., 0.);
+        let t = Transformation::new_view(&from, &to, &up);
+        assert_approx_eq!(t, Transformation::new_scaling(-1., 1., -1.));
+    }
+
+    #[test]
+    fn view_moving_world() {
+        let from = point(0., 0., 8.);
+        let to = point(0., 0., 0.);
+        let up = vector(0., 1., 0.);
+        let t = Transformation::new_view(&from, &to, &up);
+        assert_approx_eq!(t, Transformation::new_translation(0., 0., -8.));
+    }
+
+    #[test]
+    fn view_arbitrary() {
+        let from = point(1., 3., 2.);
+        let to = point(4., -1., 8.);
+        let up = vector(1., 1., 0.);
+        let t = Transformation::new_view(&from, &to, &up);
+        assert_approx_eq!(
+            t,
+            matrix!( N4, N4 =>
+                -0.50709, 0.50709,  0.67612, -2.36643;
+                 0.76773, 0.60609,  0.12122, -2.82843;
+                -0.35857, 0.59761, -0.71714,  0.0;
+                 0.0,     0.0,      0.0,      1.0
+            )
+        );
     }
 }
