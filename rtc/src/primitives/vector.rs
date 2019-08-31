@@ -126,7 +126,6 @@ pub trait CrossProd<Rhs = Self> {
     type Output;
     /// Cross product between two vectors
     fn cross(self, other: Rhs) -> Self::Output;
-
 }
 
 /// v1 x v2
@@ -144,7 +143,7 @@ impl<T: Num + Copy + Default + std::iter::Sum<T>> CrossProd for Vec4D<T> {
 /// v1 x &v2
 impl<T: Num + Copy + Default + std::iter::Sum<T>> CrossProd<&Self> for Vec4D<T> {
     type Output = Vec4D<T>;
-    fn cross(self, other: Self) -> Self::Output {
+    fn cross(self, other: &Self) -> Self::Output {
         vector(
             self.y() * other.z() - self.z() * other.y(),
             self.z() * other.x() - self.x() * other.z(),
@@ -156,7 +155,7 @@ impl<T: Num + Copy + Default + std::iter::Sum<T>> CrossProd<&Self> for Vec4D<T> 
 /// &v1 x v2
 impl<T: Num + Copy + Default + std::iter::Sum<T>> CrossProd<Vec4D<T>> for &Vec4D<T> {
     type Output = Vec4D<T>;
-    fn cross(self, other: Self) -> Self::Output {
+    fn cross(self, other: Vec4D<T>) -> Self::Output {
         vector(
             self.y() * other.z() - self.z() * other.y(),
             self.z() * other.x() - self.x() * other.z(),

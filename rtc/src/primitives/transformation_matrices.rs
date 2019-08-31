@@ -7,7 +7,7 @@ use std::mem::replace;
 
 use crate::{
     matrix,
-    primitives::vector::{Point, Transformation, Vec3D, CrossProd},
+    primitives::vector::{CrossProd, Point, Transformation, Vec3D},
     utils::typelevel_nums::*,
 };
 
@@ -291,7 +291,7 @@ where
 impl Transformation {
     pub fn new_view(from: &Point, to: &Point, up: &Vec3D) -> Self {
         let forward = (to - from).unit();
-        let left = (&forward).cross(up.unit());
+        let left = (&forward).cross(up.clone().unit());
         let true_up = (&left).cross(&forward);
         let orientation = matrix!( N4, N4 =>
              left.x(),     left.y(),     left.z(),    0.0;
@@ -299,7 +299,8 @@ impl Transformation {
             -forward.x(), -forward.y(), -forward.z(), 0.0;
              0.0,          0.0,          0.0        , 1.0
         );
-        orientation.translated(-from.x, -from.y, -from.z)
+        let translation = Transformation::new_translation(-from.x(), -from.y(), -from.z());
+        orientation * translation
     }
 }
 
@@ -414,7 +415,7 @@ mod tests {
         let to = point(0., 0., -1.);
         let up = vector(0., 1., 0.);
         let t = Transformation::new_view(&from, &to, &up);
-        assert_approx_eq!(t, Transformation::identity());
+        assert_approx_eq!(t, &Transformation::identity());
     }
 
     #[test]
@@ -423,7 +424,7 @@ mod tests {
         let to = point(0., 0., 1.);
         let up = vector(0., 1., 0.);
         let t = Transformation::new_view(&from, &to, &up);
-        assert_approx_eq!(t, Transformation::new_scaling(-1., 1., -1.));
+        assert_approx_eq!(t, &Transformation::new_scaling(-1., 1., -1.));
     }
 
     #[test]
@@ -432,18 +433,18 @@ mod tests {
         let to = point(0., 0., 0.);
         let up = vector(0., 1., 0.);
         let t = Transformation::new_view(&from, &to, &up);
-        assert_approx_eq!(t, Transformation::new_translation(0., 0., -8.));
+        assert_approx_eq!(t, &Transformation::new_translation(0., 0., -8.));
     }
 
     #[test]
     fn view_arbitrary() {
         let from = point(1., 3., 2.);
-        let to = point(4., -1., 8.);
+        let to = point(4., -2., 8.);
         let up = vector(1., 1., 0.);
         let t = Transformation::new_view(&from, &to, &up);
         assert_approx_eq!(
             t,
-            matrix!( N4, N4 =>
+            &matrix!( N4, N4 =>
                 -0.50709, 0.50709,  0.67612, -2.36643;
                  0.76773, 0.60609,  0.12122, -2.82843;
                 -0.35857, 0.59761, -0.71714,  0.0;

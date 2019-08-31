@@ -4,7 +4,7 @@ pub trait ApproxEq<Rhs = Self> {
     fn approx_eq(self, other: Rhs) -> bool;
 }
 
-pub const EPSILON_F64: f64 = 0.1e-4;
+pub const EPSILON_F64: f64 = 0.1e-3;
 impl ApproxEq for f64 {
     fn approx_eq(self, other: Self) -> bool {
         (self - other).abs() < EPSILON_F64
