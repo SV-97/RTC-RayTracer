@@ -45,7 +45,7 @@ pub fn sphere_rendering_parallel() -> std::io::Result<()> {
             let sphere = sphere.clone();
             let l1 = l1.clone();
             let camera = camera.clone();
-            let chunk = chunk.iter().map(|x| *x).collect::<Vec<usize>>();
+            let chunk = chunk.iter().copied().collect::<Vec<usize>>();
             threads.push(thread::spawn(move || {
                 (i, {
                     let mut pixels = vec![];

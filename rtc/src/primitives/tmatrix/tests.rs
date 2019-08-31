@@ -28,18 +28,9 @@ fn iter_col() {
         9 8 7;
         6 5 4
     ];
-    assert_eq!(
-        a.iter_col(0).map(|x| *x).collect::<Vec<_>>(),
-        vec![1, 5, 9, 6]
-    );
-    assert_eq!(
-        a.iter_col(1).map(|x| *x).collect::<Vec<_>>(),
-        vec![2, 6, 8, 5]
-    );
-    assert_eq!(
-        a.iter_col(2).map(|x| *x).collect::<Vec<_>>(),
-        vec![3, 7, 7, 4]
-    );
+    assert_eq!(a.iter_col(0).copied().collect::<Vec<_>>(), vec![1, 5, 9, 6]);
+    assert_eq!(a.iter_col(1).copied().collect::<Vec<_>>(), vec![2, 6, 8, 5]);
+    assert_eq!(a.iter_col(2).copied().collect::<Vec<_>>(), vec![3, 7, 7, 4]);
 }
 
 #[test]
@@ -49,18 +40,9 @@ fn iter_row() {
         2 6 8 5;
         3 7 7 4
     ];
-    assert_eq!(
-        a.iter_row(0).map(|x| *x).collect::<Vec<_>>(),
-        vec![1, 5, 9, 6]
-    );
-    assert_eq!(
-        a.iter_row(1).map(|x| *x).collect::<Vec<_>>(),
-        vec![2, 6, 8, 5]
-    );
-    assert_eq!(
-        a.iter_row(2).map(|x| *x).collect::<Vec<_>>(),
-        vec![3, 7, 7, 4]
-    );
+    assert_eq!(a.iter_row(0).copied().collect::<Vec<_>>(), vec![1, 5, 9, 6]);
+    assert_eq!(a.iter_row(1).copied().collect::<Vec<_>>(), vec![2, 6, 8, 5]);
+    assert_eq!(a.iter_row(2).copied().collect::<Vec<_>>(), vec![3, 7, 7, 4]);
 }
 
 #[test]
@@ -73,19 +55,19 @@ fn iter_rows() {
     ];
     let mut b = a.iter_rows();
     assert_eq!(
-        b.next().unwrap().map(|x| *x).collect::<Vec<_>>(),
+        b.next().unwrap().copied().collect::<Vec<_>>(),
         vec![1, 2, 3]
     );
     assert_eq!(
-        b.next().unwrap().map(|x| *x).collect::<Vec<_>>(),
+        b.next().unwrap().copied().collect::<Vec<_>>(),
         vec![5, 6, 7]
     );
     assert_eq!(
-        b.next().unwrap().map(|x| *x).collect::<Vec<_>>(),
+        b.next().unwrap().copied().collect::<Vec<_>>(),
         vec![9, 8, 7]
     );
     assert_eq!(
-        b.next().unwrap().map(|x| *x).collect::<Vec<_>>(),
+        b.next().unwrap().copied().collect::<Vec<_>>(),
         vec![6, 5, 4]
     );
 }
@@ -100,15 +82,15 @@ fn iter_cols() {
     ];
     let mut b = a.iter_cols();
     assert_eq!(
-        b.next().unwrap().map(|x| *x).collect::<Vec<_>>(),
+        b.next().unwrap().copied().collect::<Vec<_>>(),
         vec![1, 5, 9, 6]
     );
     assert_eq!(
-        b.next().unwrap().map(|x| *x).collect::<Vec<_>>(),
+        b.next().unwrap().copied().collect::<Vec<_>>(),
         vec![2, 6, 8, 5]
     );
     assert_eq!(
-        b.next().unwrap().map(|x| *x).collect::<Vec<_>>(),
+        b.next().unwrap().copied().collect::<Vec<_>>(),
         vec![3, 7, 7, 4]
     );
 }
