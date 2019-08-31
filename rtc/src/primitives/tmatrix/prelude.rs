@@ -1,5 +1,6 @@
 //! Struct definition, construction macro, constructor, printing etc.
 
+use std::cmp;
 use std::convert::From;
 use std::fmt;
 use std::marker::PhantomData;
@@ -122,9 +123,36 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Matrix {}x{}", M::val(), N::val())?;
-        for row in self.iter_rows() {
-            writeln!(f, "    {:?}", row.collect::<Vec<_>>())?;
-        }
+        let (len, rows) = self
+            .iter_rows()
+            .map(|row| {
+                row.map(|x| {
+                    let s = format!("{:?}", x);
+                    (s.len(), s)
+                })
+                .fold((0, vec![]), |(len, mut acc), (s_len, s)| {
+                    let new_len = cmp::max(len, s_len);
+                    acc.push(s);
+                    (new_len, acc)
+                })
+            })
+            .fold((0, vec![]), |(len, mut acc), (row_len, row)| {
+                let new_len = cmp::max(len, row_len);
+                acc.push(row);
+                (new_len, acc)
+            });
+        let out = rows
+            .into_iter()
+            .map(|row| {
+                row.into_iter()
+                    .map(|s| format!("{:width$}", s, width = len))
+                    .collect::<Vec<String>>()
+                    .join(" ")
+            })
+            .map(|row| format!("    |{}|", row))
+            .collect::<Vec<String>>()
+            .join("\n");
+        writeln!(f, "{}", out)?;
         Ok(())
     }
 }
