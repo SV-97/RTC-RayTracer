@@ -22,28 +22,33 @@ impl PointLight {
         point: &Point,
         eye: &Vec3D,
         normal: &Vec3D,
+        in_shadow: bool,
     ) -> Color {
         let effective_color = material.color * self.intensity;
-        let light_v = (&self.position - point).unit();
         let ambient = effective_color * material.ambient;
-        let light_dot_normal: f32 = (&light_v).scalar_prod(normal) as f32;
-        let (diffuse, specular) = if light_dot_normal < 0.0 {
-            let diffuse = Color::black();
-            let specular = Color::black();
-            (diffuse, specular)
+        if in_shadow {
+            ambient
         } else {
-            let diffuse = effective_color * material.diffuse * light_dot_normal;
-            let reflect_v = (-light_v).reflect(normal);
-            let reflect_dot_eye = reflect_v.scalar_prod(eye);
-            let specular = if reflect_dot_eye <= 0.0 {
-                Color::black()
+            let light_v = (&self.position - point).unit();
+            let light_dot_normal: f32 = (&light_v).scalar_prod(normal) as f32;
+            let (diffuse, specular) = if light_dot_normal < 0.0 {
+                let diffuse = Color::black();
+                let specular = Color::black();
+                (diffuse, specular)
             } else {
-                let factor: f32 = (reflect_dot_eye as f32).powf(material.shininess);
-                self.intensity * material.specular * factor
+                let diffuse = effective_color * material.diffuse * light_dot_normal;
+                let reflect_v = (-light_v).reflect(normal);
+                let reflect_dot_eye = reflect_v.scalar_prod(eye);
+                let specular = if reflect_dot_eye <= 0.0 {
+                    Color::black()
+                } else {
+                    let factor: f32 = (reflect_dot_eye as f32).powf(material.shininess);
+                    self.intensity * material.specular * factor
+                };
+                (diffuse, specular)
             };
-            (diffuse, specular)
-        };
-        ambient + diffuse + specular
+            ambient + diffuse + specular
+        }
     }
 }
 

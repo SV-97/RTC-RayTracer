@@ -3,12 +3,16 @@ use super::*;
 use crate::{
     assert_approx_eq,
     primitives::{
+        approx_eq::EPSILON_F64,
         ray::Ray,
-        vector::{point, vector},
+        vector::{point, vector, Point, Transformation},
     },
-    shading::{Color, PointLight},
-    shapes::{Intersection, Shape},
+    shading::{Color, Material, PointLight},
+    shapes::{Intersection, Shape, Sphere},
+    utils::typelevel_nums::*,
 };
+
+use std::f64::consts;
 
 #[test]
 fn intersect() {
@@ -77,4 +81,128 @@ fn color_at_from_inside() {
     let r = Ray::new(point(0., 0., 0.75), vector(0., 0., -1.));
     let c = w.color_at(&r);
     assert_approx_eq!(c, inner.material().color);
+}
+
+#[test]
+fn camera_new() {
+    let cam = Camera::new(160, 120, consts::FRAC_PI_2, Transformation::identity());
+    assert_eq!(cam.height(), 120);
+    assert_eq!(cam.width(), 160);
+    assert_eq!(cam.fov(), consts::FRAC_PI_2);
+    assert_approx_eq!(cam.transform(), &Transformation::identity());
+}
+
+#[test]
+fn camera_pixel_size() {
+    let cam = Camera::new(200, 125, consts::FRAC_PI_2, Transformation::identity());
+    assert_eq!(cam.height(), 125);
+    assert_eq!(cam.width(), 200);
+    assert_eq!(cam.fov(), consts::FRAC_PI_2);
+    assert_approx_eq!(cam.transform(), &Transformation::identity());
+}
+
+#[test]
+fn cons_ray_center() {
+    let cam = Camera::new(201, 101, consts::FRAC_PI_2, Transformation::identity());
+    let ray = cam.ray_for_pixel(100, 50);
+    assert_approx_eq!(ray.origin, &point(0., 0., 0.));
+    assert_approx_eq!(ray.direction, &vector(0., 0., -1.));
+}
+
+#[test]
+fn cons_ray_corner() {
+    let cam = Camera::new(201, 101, consts::FRAC_PI_2, Transformation::identity());
+    let ray = cam.ray_for_pixel(0, 0);
+    assert_approx_eq!(ray.origin, &point(0., 0., 0.));
+    assert_approx_eq!(ray.direction, &vector(0.66519, 0.33259, -0.66851));
+}
+
+#[test]
+fn cons_ray_transformed_cam() {
+    let cam = Camera::new(
+        201,
+        101,
+        consts::FRAC_PI_2,
+        Transformation::new_translation(0., -2., 5.).rotated_y(consts::FRAC_PI_4),
+    );
+    let ray = cam.ray_for_pixel(100, 50);
+    let a = consts::SQRT_2 / 2.0;
+    assert_approx_eq!(ray.origin, &point(0., 2., -5.));
+    assert_approx_eq!(ray.direction, &vector(a, 0., -a));
+}
+
+#[test]
+fn render_default_with_cam() {
+    let from = point(0., 0., -5.);
+    let to = Point::origin();
+    let up = vector(0., 1., 0.);
+    let cam = Camera::new(
+        11,
+        11,
+        consts::FRAC_PI_2,
+        Transformation::new_view(&from, &to, &up),
+    );
+    let image = cam.render(World::default());
+    assert_approx_eq!(image[(5, 5)], Color::new_rgb(0.38066, 0.47583, 0.2855));
+}
+
+#[test]
+fn shadow_nothing_colinear() {
+    let w = World::default();
+    let p = point(0., 10., 0.);
+    assert!(!w.is_shadowed(&p)[0]);
+}
+
+#[test]
+fn shadow_object_in_path() {
+    let w = World::default();
+    let p = point(10., -10., 10.);
+    assert!(w.is_shadowed(&p)[0]);
+}
+
+#[test]
+fn shadow_point_behind() {
+    let w = World::default();
+    let p = point(-20., 20., -20.);
+    assert!(!w.is_shadowed(&p)[0]);
+}
+
+#[test]
+fn shadow_object_behind() {
+    let w = World::default();
+    let p = point(-2., 2., -2.);
+    assert!(!w.is_shadowed(&p)[0]);
+}
+
+#[test]
+fn shade_hit_intersection_in_shadow() {
+    let s2 = Sphere::new(
+        Material::default(),
+        Transformation::new_translation(0., 0., 10.),
+    );
+    let w = World::new(
+        vec![Sphere::default(), s2.clone()],
+        vec![PointLight::new(
+            point(0., 0., -10.),
+            Color::new_rgb(1., 1., 1.),
+        )],
+    );
+    let r = Ray::new(point(0., 0., 5.), vector(0., 0., 1.));
+    let i = Intersection::new(4., &s2);
+    let comps = i.prepare_computations(&r);
+    let c = w.shade_hit(&comps);
+    assert_approx_eq!(c, Color::new_rgb(0.1, 0.1, 0.1));
+}
+
+#[test]
+fn shadow_hit_offset_point() {
+    let r = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
+    let shape = Sphere::new(
+        Material::default(),
+        Transformation::new_translation(0., 0., 1.),
+    );
+    let i = Intersection::new(5., &shape);
+    let comps = i.prepare_computations(&r);
+    assert!(comps.over_point.z() < -EPSILON_F64 / 2.0);
+    assert!(comps.point.z() > comps.over_point.z());
 }

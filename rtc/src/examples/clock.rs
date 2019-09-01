@@ -6,7 +6,7 @@ use std::f64::consts;
 
 /// Draws the dots of a clockface
 pub fn draw_clockface() -> std::io::Result<()> {
-    let mut canvas = Canvas::<N900, N900>::new();
+    let mut canvas = Canvas::new(900, 900);
     let pen = Pixel::from((20, 150, 255)); // blue
     let origin = point(canvas.width() as f64 / 2., canvas.height() as f64 / 2., 0.);
     let top = point(0., origin.y() / 2., 0.);

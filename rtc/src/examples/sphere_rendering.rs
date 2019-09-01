@@ -21,7 +21,7 @@ use std::thread;
 /// further up at y = 750.
 /// The first lightsource is to the left of the camera.
 pub fn sphere_rendering_parallel() -> std::io::Result<()> {
-    let mut canvas = Canvas::<N900, N900>::new();
+    let mut canvas = Canvas::new(900, 900);
     let material = Material::new(Color::from((50, 70, 255)) * 0.8, 0.3, 0.7, 0.6, 1.);
 
     // Sphere
@@ -62,8 +62,13 @@ pub fn sphere_rendering_parallel() -> std::io::Result<()> {
                                     let point = r.position(hit.t);
                                     let normal = sphere.normal_at(&point);
                                     let eye = -r.direction;
-                                    let color =
-                                        l1.lighting(sphere.material(), &point, &eye, &normal);
+                                    let color = l1.lighting(
+                                        sphere.material(),
+                                        &point,
+                                        &eye,
+                                        &normal,
+                                        false,
+                                    );
                                     pixels.push((*x, y, color));
                                 }
                             });
@@ -97,7 +102,7 @@ pub fn sphere_rendering_parallel() -> std::io::Result<()> {
 /// further up at y = 750.
 /// The first lightsource is to the left of the camera.
 pub fn sphere_rendering() -> std::io::Result<()> {
-    let mut canvas = Canvas::<N900, N900>::new();
+    let mut canvas = Canvas::new(900, 900);
     let material = Material::new(Color::from((50, 255, 60)) * 0.8, 0.3, 0.4, 0.6, 0.7);
 
     // Sphere
@@ -118,7 +123,7 @@ pub fn sphere_rendering() -> std::io::Result<()> {
                     let point = r.position(hit.t);
                     let normal = sphere.normal_at(&point);
                     let eye = -r.direction;
-                    let color = l1.lighting(sphere.material(), &point, &eye, &normal);
+                    let color = l1.lighting(sphere.material(), &point, &eye, &normal, false);
                     canvas.draw(x, y, color).expect("This should've happened.");
                 }
             });

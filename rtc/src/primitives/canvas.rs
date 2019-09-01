@@ -1,14 +1,39 @@
 use std::convert::TryInto;
 use std::f32;
+use std::ops::{Index, IndexMut};
 
-use crate::utils::{clamp, split_long_lines, typelevel_nums::*};
+use crate::utils::{clamp, split_long_lines};
 
 use super::pixel::Pixel;
-use super::tmatrix::Matrix;
 
-pub type Canvas<WIDTH, HEIGHT> = Matrix<Pixel, HEIGHT, WIDTH>;
+pub struct Canvas {
+    data: Vec<Pixel>,
+    width: usize,
+    height: usize,
+}
 
-impl<WIDTH: Nat + Val, HEIGHT: Nat + Val> Canvas<WIDTH, HEIGHT> {
+impl Canvas {
+    pub fn new(width: usize, height: usize) -> Self {
+        let data = vec![Pixel::default(); width * height];
+        Canvas {
+            data,
+            width,
+            height,
+        }
+    }
+
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    pub fn height(&self) -> usize {
+        self.height
+    }
+
+    pub fn to_row_major(&self, i: usize, j: usize) -> usize {
+        self.width * i + j
+    }
+
     pub fn draw_block(
         &mut self,
         x: usize,
@@ -30,22 +55,22 @@ impl<WIDTH: Nat + Val, HEIGHT: Nat + Val> Canvas<WIDTH, HEIGHT> {
 
     /// Draw a pixel to the canvas
     pub fn draw(&mut self, x: usize, y: usize, pixel: Pixel) -> Result<(), String> {
-        if x < WIDTH::val() {
-            if y < HEIGHT::val() {
-                let i = Self::to_row_major(y, x);
+        if x < self.width {
+            if y < self.height {
+                let i = self.to_row_major(y, x);
                 self.data[i] = pixel;
                 Ok(())
             } else {
                 Err(format!(
                     "Tried accessing canvas out of bounds. Max y-index={}, actual index={}.",
-                    HEIGHT::val() - 1,
+                    self.height - 1,
                     y
                 ))
             }
         } else {
             Err(format!(
                 "Tried accessing canvas out of bounds. Max x-index={}, actual index={}.",
-                WIDTH::val() - 1,
+                self.width - 1,
                 x
             ))
         }
@@ -53,7 +78,7 @@ impl<WIDTH: Nat + Val, HEIGHT: Nat + Val> Canvas<WIDTH, HEIGHT> {
 
     /// Return a PPM encoded version of the picture
     pub fn as_ppm(&self) -> String {
-        let header = format!("P3\n{} {}\n255\n", WIDTH::val(), HEIGHT::val());
+        let header = format!("P3\n{} {}\n255\n", self.width, self.height);
 
         let lines = self.iter_rows().fold(vec![], |mut buf, row| {
             let row_buf = row.fold(vec![], |mut row_buf, pixel| {
@@ -76,6 +101,43 @@ impl<WIDTH: Nat + Val, HEIGHT: Nat + Val> Canvas<WIDTH, HEIGHT> {
         let data = length_verified_buf.join("\n");
         format!("{}{}\n", header, data)
     }
+
+    /// Iterate over all elements
+    pub fn iter(&self) -> impl Iterator<Item = &Pixel> {
+        self.data.iter()
+    }
+
+    /// Iterate over the ith row of the Canvas
+    pub fn iter_row(&self, i: usize) -> impl Iterator<Item = &Pixel> {
+        self.iter().skip(i * self.width).take(self.width)
+    }
+
+    /// Iterate over the jth coloumn of the Canvas
+    pub fn iter_col(&self, j: usize) -> impl Iterator<Item = &Pixel> {
+        self.iter().skip(j).step_by(self.width)
+    }
+
+    /// Iterate over all rows of the Canvas
+    pub fn iter_rows(&self) -> impl Iterator<Item = impl Iterator<Item = &Pixel>> {
+        (0..self.height).map(move |i| self.iter_row(i))
+    }
+}
+
+impl Index<(usize, usize)> for Canvas {
+    type Output = Pixel;
+
+    fn index(&self, coords: (usize, usize)) -> &Self::Output {
+        let (i, j) = coords;
+        &self.data[self.to_row_major(i, j)]
+    }
+}
+
+impl IndexMut<(usize, usize)> for Canvas {
+    fn index_mut(&mut self, coords: (usize, usize)) -> &mut Self::Output {
+        let (i, j) = coords;
+        let idx = self.to_row_major(i, j);
+        &mut self.data[idx]
+    }
 }
 
 /// Clamp the value to the range from 0.0 to 1.0 and then map that range onto 0 to max
@@ -92,7 +154,7 @@ mod tests {
 
     #[test]
     fn read_and_write() {
-        let mut c = Canvas::<N2, N2>::new();
+        let mut c = Canvas::new(2, 2);
         c[(0, 0)] = Pixel::white();
         c[(0, 1)] = Pixel::green();
         c[(1, 1)] = Pixel::red();
@@ -104,7 +166,7 @@ mod tests {
 
     #[test]
     fn ppm_header() {
-        let c = Canvas::<N20, N10>::new();
+        let c = Canvas::new(20, 10);
         assert_eq!(
             &c.as_ppm().lines().take(3).collect::<Vec<_>>().join("\n"),
             "P3\n20 10\n255"
@@ -113,7 +175,7 @@ mod tests {
 
     #[test]
     fn iter_rows() {
-        let mut c = Canvas::<N2, N2>::new();
+        let mut c = Canvas::new(2, 2);
         c[(0, 0)] = Pixel::white();
         c[(0, 1)] = Pixel::green();
         c[(1, 1)] = Pixel::red();
@@ -133,7 +195,7 @@ mod tests {
     }
     #[test]
     fn ppm_data() {
-        let mut c = Canvas::<N2, N2>::new();
+        let mut c = Canvas::new(2, 2);
         c[(0, 0)] = Pixel::white() * 0.5;
         c[(1, 1)] = Pixel::red();
         c[(0, 1)] = Pixel::white() * 10.0;
@@ -142,7 +204,7 @@ mod tests {
     }
 
     fn end_in_newline() {
-        let c = Canvas::<N5, N3>::new();
+        let c = Canvas::new(5, 3);
         assert_eq!(c.as_ppm().chars().last(), Some('\n'));
     }
 }

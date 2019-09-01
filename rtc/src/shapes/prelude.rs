@@ -1,9 +1,8 @@
-use std::cell::Ref;
 use std::ops::Index;
 
 use crate::{
     primitives::{
-        approx_eq::ApproxEq,
+        approx_eq::{ApproxEq, EPSILON_F64},
         ray::Ray,
         vector::{Point, ScalarProd, Transformation, Vec3D},
     },
@@ -19,11 +18,11 @@ where
     /// Get the transformation of a shape
     fn get_transform(&'a self) -> &'a Transformation;
     /// Get the transformation of a shape mutably
-    fn get_transform_mut(&'a mut self) -> &'a mut Transformation;
+    fn get_transform_mut(&'a mut self, f: impl Fn(&mut Transformation));
     /// Find all intersections of a shape with a ray if there are some
     fn intersect(&'a self, ray: &Ray) -> Option<Intersections<'a, Self>>;
     /// Get the inversed transformation - should be cached internally
-    fn get_inverse_transform(&'a self) -> Ref<'a, Transformation>;
+    fn get_inverse_transform(&'a self) -> &'a Transformation;
     /// Calculate the normal vector at any point on the shape
     fn normal_at(&self, point: &Point) -> Vec3D;
     /// Get the material applied to the shape
@@ -43,6 +42,7 @@ where
     pub t: f64,
     pub object: &'a T,
     pub inside: bool,
+    pub over_point: Point,
 }
 
 impl<'a, T: Shape<'a>> PreComp<'a, T> {
@@ -52,6 +52,7 @@ impl<'a, T: Shape<'a>> PreComp<'a, T> {
         normal: Vec3D,
         intersection: Intersection<'a, T>,
         inside: bool,
+        over_point: Point,
     ) -> Self {
         PreComp {
             point,
@@ -60,6 +61,7 @@ impl<'a, T: Shape<'a>> PreComp<'a, T> {
             t: intersection.t,
             object: intersection.object,
             inside,
+            over_point,
         }
     }
 }
@@ -89,7 +91,8 @@ where
         if inside {
             normal = -normal;
         }
-        PreComp::new(point, eye, normal, self, inside)
+        let over_point = &point + &normal * EPSILON_F64;
+        PreComp::new(point, eye, normal, self, inside, over_point)
     }
 }
 

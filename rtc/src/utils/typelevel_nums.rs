@@ -84,6 +84,7 @@ pub type N128 = <N64 as Mul<N2>>::Output;
 pub type N256 = <N128 as Mul<N2>>::Output;
 pub type N512 = <N256 as Mul<N2>>::Output;
 pub type N1024 = <N512 as Mul<N2>>::Output;
+pub type N2048 = <N1024 as Mul<N2>>::Output;
 
 /// Extract the value-level value of a type
 pub trait Val {

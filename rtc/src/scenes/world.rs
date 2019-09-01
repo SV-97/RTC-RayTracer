@@ -1,7 +1,7 @@
 use crate::{
     primitives::{
         ray::Ray,
-        vector::{point, Transformation},
+        vector::{point, Point, Transformation},
     },
     shading::{Color, Material, PointLight},
     shapes::{Intersections, PreComp, Shape, Sphere},
@@ -34,14 +34,50 @@ impl World {
         Intersections::new(v)
     }
 
-    pub fn shade_hit<'a, T: Shape<'a>>(&self, comp: &PreComp<'a, T>) -> Color {
+    /// Cast a shadow ray to determine whether a point is in shadow
+    pub fn is_shadowed(&self, point: &Point) -> Vec<bool> {
+        // FIXME Handle case for multiple light sources
         self.lights
             .iter()
             .map(|light| {
-                light.lighting(comp.object.material(), &comp.point, &comp.eye, &comp.normal)
+                let v = &light.position - point;
+                let distance = v.mag();
+                let direction = v.unit();
+                let ray = Ray::new((*point).clone(), direction.clone());
+                let is = self.intersect(&ray);
+                let h = is.hit();
+                match h {
+                    Some(hit) => hit.t < distance,
+                    None => false,
+                }
+            })
+            .collect::<Vec<_>>()
+    }
+
+    pub fn shade_hit<'a, T: Shape<'a>>(&self, comp: &PreComp<'a, T>) -> Color {
+        self.lights
+            .iter()
+            .zip(self.is_shadowed(&comp.over_point).into_iter())
+            .map(|(light, shadowed)| {
+                light.lighting(
+                    comp.object.material(),
+                    &comp.point,
+                    &comp.eye,
+                    &comp.normal,
+                    shadowed,
+                )
             })
             .fold(None, |blend: Option<Color>, new_color| match blend {
-                Some(blend) => Some(blend.blend(new_color)),
+                Some(blend) => {
+                    let old = blend;
+                    let new = new_color;
+                    // let new = new_color.blend(blend);
+                    Some(Color::new_rgb(
+                        new.r.max(old.r),
+                        new.g.max(old.g),
+                        new.b.max(old.b),
+                    ))
+                }
                 None => Some(new_color),
             })
             .unwrap()
@@ -67,7 +103,9 @@ impl Default for World {
             Transformation::identity(),
         );
         let mut s2 = Sphere::default();
-        s2.get_transform_mut().scale(0.5, 0.5, 0.5);
+        s2.get_transform_mut(|t| {
+            t.scale(0.5, 0.5, 0.5);
+        });
         World::new(vec![s1, s2], vec![light])
     }
 }

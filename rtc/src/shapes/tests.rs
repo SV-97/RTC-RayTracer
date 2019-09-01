@@ -162,7 +162,9 @@ fn normal_normalization() {
 #[test]
 fn normal_of_translated_sphere() {
     let mut s = Sphere::default();
-    s.get_transform_mut().translate(0., 1., 0.);
+    s.get_transform_mut(|t| {
+        t.translate(0., 1., 0.);
+    });
     let n = s.normal_at(&point(0., 1.70711, -0.70711));
     assert_approx_eq!(n, &vector(0., 0.70711, -0.70711));
 }
@@ -171,9 +173,9 @@ fn normal_of_translated_sphere() {
 fn normal_of_transformed_sphere() {
     use std::f64::consts;
     let mut s = Sphere::default();
-    s.get_transform_mut()
-        .rotate_z(consts::PI / 5.)
-        .scale(1., 0.5, 1.);
+    s.get_transform_mut(|t| {
+        t.rotate_z(consts::PI / 5.).scale(1., 0.5, 1.);
+    });
     let a = consts::SQRT_2 / 2.0;
     let n = s.normal_at(&point(0., a, -a));
     assert_approx_eq!(n, &vector(0., 0.97014, -0.24254));

@@ -16,7 +16,7 @@ use std::f64::consts;
 /// the sphere is in the center of the canvas at x = 450, y = 450
 /// the camera or lightsource is another 400px further away at z = 650
 pub fn sphere_shadow() -> std::io::Result<()> {
-    let mut canvas = Canvas::<N900, N900>::new();
+    let mut canvas = Canvas::new(900, 900);
     let mut sphere = Sphere::default();
     let transforms = Transformation::new_scaling(200., 200., 200.).translated(450., 450., 250.);
 

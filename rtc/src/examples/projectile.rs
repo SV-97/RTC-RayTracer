@@ -14,7 +14,7 @@ pub fn simulate_trajectory() -> std::io::Result<()> {
         Environment::new(vector(0.0, -0.1, 0.0), vector(-0.01, 0.0, 0.0)),
         Projectile::new(point(0.0, 1.0, 0.0), vector(1.0, 1.8, 0.0).unit() * 11.25),
     );
-    let mut canvas = Canvas::<N900, <N500 as Add<N50>>::Output>::new();
+    let mut canvas = Canvas::new(900, 550);
     let pen = Pixel::from((253, 150, 20)); // orange
     for point in sim.take_while(|p| p.position.y() > 0.0) {
         let x = point.position.x().round() as usize;

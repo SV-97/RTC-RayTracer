@@ -23,7 +23,7 @@ fn lighting_eye_between() {
     let eye = vector(0., 0., -1.);
     let normal = vector(0., 0., -1.);
     let light = PointLight::new(point(0., 0., -10.), Color::new_rgb(1., 1., 1.));
-    let result = light.lighting(&m, &position, &eye, &normal);
+    let result = light.lighting(&m, &position, &eye, &normal, false);
     assert_approx_eq!(result, Color::new_rgb(1.9, 1.9, 1.9));
 }
 
@@ -35,7 +35,7 @@ fn lighting_eye_up() {
     let eye = vector(0., a, -a);
     let normal = vector(0., 0., -1.);
     let light = PointLight::new(point(0., 0., -10.), Color::new_rgb(1., 1., 1.));
-    let result = light.lighting(&m, &position, &eye, &normal);
+    let result = light.lighting(&m, &position, &eye, &normal, false);
     assert_approx_eq!(result, Color::new_rgb(1.0, 1.0, 1.0));
 }
 
@@ -46,7 +46,7 @@ fn lighting_light_up() {
     let eye = vector(0., 0., -1.);
     let normal = vector(0., 0., -1.);
     let light = PointLight::new(point(0., 10., -10.), Color::new_rgb(1., 1., 1.));
-    let result = light.lighting(&m, &position, &eye, &normal);
+    let result = light.lighting(&m, &position, &eye, &normal, false);
     assert_approx_eq!(result, Color::new_rgb(0.7364, 0.7364, 0.7364));
 }
 
@@ -58,7 +58,7 @@ fn lighting_light_up_eye_down() {
     let eye = vector(0., -a, -a);
     let normal = vector(0., 0., -1.);
     let light = PointLight::new(point(0., 10., -10.), Color::new_rgb(1., 1., 1.));
-    let result = light.lighting(&m, &position, &eye, &normal);
+    let result = light.lighting(&m, &position, &eye, &normal, false);
     assert_approx_eq!(result, Color::new_rgb(1.6364, 1.6364, 1.6364));
 }
 
@@ -69,6 +69,17 @@ fn lighting_light_behind() {
     let eye = vector(0., 0., -1.);
     let normal = vector(0., 0., -1.);
     let light = PointLight::new(point(0., 0., 10.), Color::new_rgb(1., 1., 1.));
-    let result = light.lighting(&m, &position, &eye, &normal);
+    let result = light.lighting(&m, &position, &eye, &normal, false);
+    assert_approx_eq!(result, Color::new_rgb(0.1, 0.1, 0.1));
+}
+
+#[test]
+fn lighting_surface_in_shadow() {
+    let m = Material::default();
+    let position = point(0., 0., 0.);
+    let eye = vector(0., 0., -1.);
+    let normal = vector(0., 0., -1.);
+    let light = PointLight::new(point(0., 0., -10.), Color::new_rgb(1., 1., 1.));
+    let result = light.lighting(&m, &position, &eye, &normal, true);
     assert_approx_eq!(result, Color::new_rgb(0.1, 0.1, 0.1));
 }

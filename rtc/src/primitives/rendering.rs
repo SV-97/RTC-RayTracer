@@ -2,15 +2,14 @@ use std::fs::File;
 use std::io::prelude::*;
 
 use super::canvas::Canvas;
-use crate::utils::typelevel_nums::*;
 
-pub struct Rendering<HEIGHT: Nat, WIDTH: Nat> {
+pub struct Rendering {
     name: String,
-    canvas: Canvas<HEIGHT, WIDTH>,
+    canvas: Canvas,
 }
 
-impl<HEIGHT: Nat + Val, WIDTH: Nat + Val> Rendering<HEIGHT, WIDTH> {
-    pub fn new(name: impl Into<String>, canvas: Canvas<HEIGHT, WIDTH>) -> Self {
+impl Rendering {
+    pub fn new(name: impl Into<String>, canvas: Canvas) -> Self {
         Rendering {
             name: name.into(),
             canvas,
