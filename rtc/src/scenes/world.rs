@@ -4,16 +4,21 @@ use crate::{
         vector::{point, Point, Transformation},
     },
     shading::{Color, Material, PointLight},
-    shapes::{Intersections, PreComp, Shape, Sphere},
+    shapes::{Intersections, PreComp, RenderA, Shape, Sphere},
 };
 
-pub struct World {
-    pub objects: Vec<Sphere>,
+pub struct World<'a>
+{
+    pub objects: Vec<&'a dyn RenderA>,
     pub lights: Vec<PointLight>,
 }
 
-impl World {
-    pub fn new(objects: Vec<Sphere>, lights: Vec<PointLight>) -> Self {
+impl<'a, T> World<'a>
+where
+    T: IsShape,
+    Shape<T>: Render<'a, T>
+{    
+    pub fn new(objects: Vec<&'a dyn Render<'a, T>>, lights: Vec<PointLight>) -> Self {
         World { objects, lights }
     }
 
@@ -22,7 +27,8 @@ impl World {
     }
 
     /// Find the intersections of a ray with all objects in the scene sorted by their t-value
-    pub fn intersect<'a>(&'a self, ray: &'a Ray) -> Intersections<'a, Sphere> {
+    pub fn intersect(&'a self, ray: &'a Ray) -> Intersections<'a, T>
+    {
         let mut v = self
             .objects
             .iter()
@@ -53,7 +59,7 @@ impl World {
             .collect::<Vec<_>>()
     }
 
-    pub fn shade_hit<'a, T: Shape<'a>>(&self, comp: &PreComp<'a, T>) -> Color {
+    pub fn shade_hit(&self, comp: &PreComp<'a, T>) -> Color {
         self.lights
             .iter()
             .zip(self.is_shadowed(&comp.over_point).into_iter())
@@ -88,14 +94,14 @@ impl World {
 impl Default for World {
     fn default() -> Self {
         let light = PointLight::new(point(-10., 10., -10.), Color::new_rgb(1., 1., 1.));
-        let s1 = Sphere::new(
+        let s1 = Shape::<Sphere>::new(
             Material::new(Color::new_rgb(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0),
             Transformation::identity(),
         );
-        let mut s2 = Sphere::default();
+        let mut s2 = Shape::<Sphere>::default();
         s2.get_transform_mut(|t| {
             t.scale(0.5, 0.5, 0.5);
         });
-        World::new(vec![s1, s2], vec![light])
+        World::new(vec![&s1, &s2], vec![light])
     }
 }
