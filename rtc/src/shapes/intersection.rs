@@ -14,22 +14,22 @@ use super::prelude::*;
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct Intersection<'a, T>
 where
-    T: IsShape,
+    T: Render<'a>,
 {
     pub t: f64,
-    pub object: &'a dyn Render<'a, T>,
+    pub object: &'a T,
 }
 
-impl<'a, T> Intersection<'a, T>
+impl<'a, T> Intersection<'a, Shape<T>>
 where
     T: IsShape,
-    Shape<T>: Render<'a, T>,
+    Shape<T>: Render<'a>,
 {
     pub fn new(t: f64, object: &'a Shape<T>) -> Self {
         Intersection { t, object }
     }
 
-    pub fn prepare_computations(self, ray: &Ray) -> PreComp<'a, T> {
+    pub fn prepare_computations(self, ray: &Ray) -> PreComp<'a, Shape<T>> {
         let point = ray.position(self.t);
         let eye = -ray.direction.clone();
         let mut normal = self.object.normal_at(&point);
@@ -42,7 +42,7 @@ where
     }
 }
 
-impl<'a, T> ApproxEq for Intersection<'a, T>
+impl<'a, T> ApproxEq for Intersection<'a, Shape<T>>
 where
     T: IsShape,
     &'a Shape<T>: ApproxEq,
@@ -52,7 +52,7 @@ where
     }
 }
 
-impl<'a, T> ApproxEq for &Intersection<'a, T>
+impl<'a, T> ApproxEq for &Intersection<'a, Shape<T>>
 where
     T: IsShape,
     &'a Shape<T>: ApproxEq,
@@ -65,15 +65,16 @@ where
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct Intersections<'a, T>
 where
-    T: IsShape,
+    T: Render<'a>,
 {
     /// Intersections
     is: Vec<Intersection<'a, T>>,
 }
 
-impl<'a, T> Intersections<'a, T>
+impl<'a, T> Intersections<'a, Shape<T>>
 where
     T: IsShape,
+    Shape<T>: Render<'a>,
 {
     pub fn new(is: Vec<Intersection<'a, T>>) -> Self {
         let mut is = is;

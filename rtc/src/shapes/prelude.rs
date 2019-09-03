@@ -80,13 +80,13 @@ pub trait IsShape {}
 
 /// Trait for shapes that are renderable
 /// should only be implemented for specializations of `Shape<T>`.
-pub trait Render<'a, T>
+pub trait Render<'a>
 where
     Self: Sized,
     T: IsShape,
 {
     /// Find all intersections of a shape with a ray if there are some
-    fn intersect(&'a self, ray: &Ray) -> Option<Intersections<'a, T>>;
+    fn intersect(&'a self, ray: &Ray) -> Option<Intersections<'a, Self>>;
     /// Calculate the normal vector at any point on the shape
     fn normal_at(&self, point: &Point) -> Vec3D;
 }
