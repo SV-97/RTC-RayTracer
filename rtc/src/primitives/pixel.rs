@@ -31,6 +31,15 @@ impl Pixel {
         self * other
     }
 
+    /// Blend two colours by selecting the brigther of the two for any component
+    pub fn blend_lighten_only(self, other: Self) -> Self {
+        Pixel::new_rgb(
+            self.r.max(other.r),
+            self.g.max(other.g),
+            self.b.max(other.b),
+        )
+    }
+
     pub fn abs(self) -> Self {
         self.map(f32::abs)
     }
@@ -120,6 +129,8 @@ impl Default for Pixel {
 mod tests {
     use super::*;
 
+    use crate::assert_approx_eq;
+
     #[test]
     fn approx_eq() {
         assert!(!Pixel::white().approx_eq(Pixel::red()));
@@ -153,5 +164,13 @@ mod tests {
         let c1 = Pixel::new_rgb(1.0, 0.2, 0.4);
         let c2 = Pixel::new_rgb(0.9, 1.0, 0.1);
         assert!(c1.blend(c2).approx_eq(Pixel::new_rgb(0.9, 0.2, 0.04)));
+    }
+
+    #[test]
+    fn blend_lighten_only() {
+        let c1 = Pixel::new_rgb(1.0, 0.2, 0.8);
+        let c2 = Pixel::new_rgb(0.3, 0.2, 0.3);
+        assert_approx_eq!(c1.blend_lighten_only(c2), Pixel::new_rgb(1.0, 0.2, 0.8));
+        assert_approx_eq!(c1.blend_lighten_only(c2), c2.blend_lighten_only(c1));
     }
 }

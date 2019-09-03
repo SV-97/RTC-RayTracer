@@ -36,7 +36,6 @@ impl World {
 
     /// Cast a shadow ray to determine whether a point is in shadow
     pub fn is_shadowed(&self, point: &Point) -> Vec<bool> {
-        // FIXME Handle case for multiple light sources
         self.lights
             .iter()
             .map(|light| {
@@ -68,16 +67,7 @@ impl World {
                 )
             })
             .fold(None, |blend: Option<Color>, new_color| match blend {
-                Some(blend) => {
-                    let old = blend;
-                    let new = new_color;
-                    // let new = new_color.blend(blend);
-                    Some(Color::new_rgb(
-                        new.r.max(old.r),
-                        new.g.max(old.g),
-                        new.b.max(old.b),
-                    ))
-                }
+                Some(blend) => Some(new_color.blend_lighten_only(blend)),
                 None => Some(new_color),
             })
             .unwrap()
