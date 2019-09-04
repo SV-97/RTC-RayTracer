@@ -76,3 +76,6 @@ impl ApproxEq for &Shape {
         self.transform.approx_eq(&other.transform) && self.material.approx_eq(&other.material)
     }
 }
+
+impl<'a, T> IsShape for T
+where Shape<T>: Render<'a, T> {}

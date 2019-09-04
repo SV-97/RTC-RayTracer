@@ -1,3 +1,5 @@
+use crate::primitives::approx_eq::ApproxEq;
+
 use super::Color;
 
 use crate::primitives::approx_eq::ApproxEq;

@@ -100,6 +100,6 @@ impl Default for World {
         s2.modify_transform(|t| {
             t.scale(0.5, 0.5, 0.5);
         });
-        World::new(vec![s1, s2], vec![light])
+        World::new(vec![&s1, &s2], vec![light])
     }
 }
