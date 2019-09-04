@@ -2,10 +2,13 @@ use std::sync::Arc;
 
 use super::prelude::*;
 
-use crate::{shading::Material, primitives::{
-    ray::Ray,
-    vector::{Point, ScalarProd, Transformation, Vec3D},
-}};
+use crate::{
+    primitives::{
+        ray::Ray,
+        vector::{Point, ScalarProd, Transformation, Vec3D},
+    },
+    shading::Material,
+};
 
 pub static SPHERE: ShapeFuncs = (intersect, normal_at);
 
@@ -43,8 +46,14 @@ fn normal_at(shape: Arc<Shape>, point: &Point) -> Vec3D {
     out.unit()
 }
 
+impl Shape {
+    pub fn new_sphere(material: Material, transform: Transformation) -> Self {
+        Self::new(SPHERE, material, transform)
+    }
+}
+
 impl Default for Shape {
     fn default() -> Self {
-        Self::new(Transformation::identity(), Material::default(), SPHERE)
+        Self::new(SPHERE, Material::default(), Transformation::identity())
     }
 }

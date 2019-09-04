@@ -178,9 +178,9 @@ fn shadow_object_behind() {
 #[test]
 fn shade_hit_intersection_in_shadow() {
     let s2 = Shape::new(
-        Transformation::new_translation(0., 0., 10.),
-        Material::default(),
         SPHERE,
+        Material::default(),
+        Transformation::new_translation(0., 0., 10.),
     );
     let w = World::new(
         vec![Shape::default(), s2.clone()],
@@ -200,9 +200,9 @@ fn shade_hit_intersection_in_shadow() {
 fn shadow_hit_offset_point() {
     let r = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
     let shape = Shape::new(
-        Transformation::new_translation(0., 0., 1.),
-        Material::default(),
         SPHERE,
+        Material::default(),
+        Transformation::new_translation(0., 0., 1.),
     );
     let shape = Arc::new(shape);
     let i = Intersection::new(5., shape);

@@ -1,15 +1,11 @@
-use std::marker::{PhantomData, Send, Sync};
 use std::sync::mpsc::sync_channel;
 use std::sync::{Arc, RwLock};
 use std::thread::spawn;
 
-use crate::{
-    primitives::{
-        canvas::Canvas,
-        ray::Ray,
-        vector::{point, Point, Transformation},
-    },
-    utils::typelevel_nums::*,
+use crate::primitives::{
+    canvas::Canvas,
+    ray::Ray,
+    vector::{point, Point, Transformation},
 };
 
 use super::World;

@@ -1,13 +1,10 @@
 use std::ops::Index;
 use std::sync::Arc;
 
-use crate::{
-    primitives::{
-        approx_eq::{ApproxEq, EPSILON_F64},
-        ray::Ray,
-        vector::{Point, ScalarProd, Transformation, Vec3D},
-    },
-    shading::Material,
+use crate::primitives::{
+    approx_eq::{ApproxEq, EPSILON_F64},
+    ray::Ray,
+    vector::{Point, ScalarProd, Vec3D},
 };
 
 use super::prelude::*;

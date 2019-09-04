@@ -1,24 +1,20 @@
-use std::marker::PhantomData;
-use std::ops::Index;
-use std::sync::Arc;
 use std::fmt;
+use std::sync::Arc;
 
 use crate::{
     primitives::{
-        approx_eq::{ApproxEq, EPSILON_F64},
+        approx_eq::ApproxEq,
         ray::Ray,
-        vector::{Point, ScalarProd, Transformation, Vec3D},
+        vector::{Point, Transformation, Vec3D},
     },
     shading::Material,
 };
 
 pub use super::{Intersection, Intersections};
 
-
 pub type ShapeFuncs = (IntersectFunc, NormalAtFunc);
 pub type IntersectFunc = fn(Arc<Shape>, &Ray) -> Option<Intersections>;
 pub type NormalAtFunc = fn(Arc<Shape>, &Point) -> Vec3D;
-
 
 /// A general 3D shape
 #[derive(Clone)]
@@ -33,12 +29,16 @@ pub struct Shape {
 
 impl fmt::Debug for Shape {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Shape {{ transformation: {:?}, inverse_transformation: {:?} , material: {:?}}}", self.transform, self.inverse_transform, self.material)
+        write!(
+            f,
+            "Shape {{ transformation: {:?}, inverse_transformation: {:?} , material: {:?}}}",
+            self.transform, self.inverse_transform, self.material
+        )
     }
 }
 
 impl Shape {
-    pub fn new(transform: Transformation, material: Material, funcs: ShapeFuncs) -> Self {
+    pub fn new(funcs: ShapeFuncs, material: Material, transform: Transformation) -> Self {
         let (intersect, normal_at) = funcs;
         let inverse_transform = transform
             .invert()
@@ -69,15 +69,10 @@ impl Shape {
         f(&mut self.transform);
         self.inverse_transform = self.transform.invert().unwrap();
     }
-
-    pub fn to_arc(self) -> Arc<Self> {
-        Arc::new(self)
-    }
 }
 
 impl ApproxEq for &Shape {
     fn approx_eq(self, other: Self) -> bool {
-        self.transform.approx_eq(&other.transform)
-            && self.material.approx_eq(&other.material)
+        self.transform.approx_eq(&other.transform) && self.material.approx_eq(&other.material)
     }
 }

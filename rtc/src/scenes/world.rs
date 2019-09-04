@@ -92,9 +92,9 @@ impl Default for World {
     fn default() -> Self {
         let light = PointLight::new(point(-10., 10., -10.), Color::new_rgb(1., 1., 1.));
         let s1 = Shape::new(
-            Transformation::identity(),
-            Material::new(Color::new_rgb(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0),
             SPHERE,
+            Material::new(Color::new_rgb(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0),
+            Transformation::identity(),
         );
         let mut s2 = Shape::default();
         s2.modify_transform(|t| {
