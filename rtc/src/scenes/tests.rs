@@ -8,11 +8,12 @@ use crate::{
         vector::{point, vector, Point, Transformation},
     },
     shading::{Color, Material, PointLight},
-    shapes::{Intersection, Shape, Sphere},
+    shapes::{Intersection, Shape, SPHERE},
     utils::typelevel_nums::*,
 };
 
 use std::f64::consts;
+use std::sync::Arc;
 
 #[test]
 fn intersect() {
@@ -31,7 +32,7 @@ fn shade_intersection() {
     let w = World::default();
     let r = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
     let s = &w.objects[0];
-    let i = Intersection::new(4., s);
+    let i = Intersection::new(4., Arc::clone(s));
     let comps = i.prepare_computations(&r);
     let c = w.shade_hit(&comps);
     assert_approx_eq!(c, Color::new_rgb(0.38066, 0.47583, 0.2855));
@@ -46,7 +47,7 @@ fn shade_intersection_inside() {
     )];
     let r = Ray::new(point(0., 0., 0.), vector(0., 0., 1.));
     let s = &w.objects[1];
-    let i = Intersection::new(0.5, s);
+    let i = Intersection::new(0.5, Arc::clone(s));
     let comps = i.prepare_computations(&r);
     let c = w.shade_hit(&comps);
     assert_approx_eq!(c, Color::new_rgb(0.90498, 0.90498, 0.90498));
@@ -71,16 +72,16 @@ fn color_at_hit() {
 #[test]
 fn color_at_from_inside() {
     let mut w = World::default();
-    let outer = &mut w.objects[0];
-    outer.material_mut().ambient = 1.0;
+    let outer = Arc::make_mut(&mut w.objects[0]);
+    outer.material.ambient = 1.0;
     drop(outer);
-    let inner = &mut w.objects[1];
-    inner.material_mut().ambient = 1.0;
+    let inner = Arc::make_mut(&mut w.objects[1]);
+    inner.material.ambient = 1.0;
     let inner = &w.objects[1];
 
     let r = Ray::new(point(0., 0., 0.75), vector(0., 0., -1.));
     let c = w.color_at(&r);
-    assert_approx_eq!(c, inner.material().color);
+    assert_approx_eq!(c, inner.material.color);
 }
 
 #[test]
@@ -176,19 +177,20 @@ fn shadow_object_behind() {
 
 #[test]
 fn shade_hit_intersection_in_shadow() {
-    let s2 = Sphere::new(
-        Material::default(),
+    let s2 = Shape::new(
         Transformation::new_translation(0., 0., 10.),
+        Material::default(),
+        SPHERE,
     );
     let w = World::new(
-        vec![Sphere::default(), s2.clone()],
+        vec![Shape::default(), s2.clone()],
         vec![PointLight::new(
             point(0., 0., -10.),
             Color::new_rgb(1., 1., 1.),
         )],
     );
     let r = Ray::new(point(0., 0., 5.), vector(0., 0., 1.));
-    let i = Intersection::new(4., &s2);
+    let i = Intersection::new(4., Arc::new(s2));
     let comps = i.prepare_computations(&r);
     let c = w.shade_hit(&comps);
     assert_approx_eq!(c, Color::new_rgb(0.1, 0.1, 0.1));
@@ -197,11 +199,13 @@ fn shade_hit_intersection_in_shadow() {
 #[test]
 fn shadow_hit_offset_point() {
     let r = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
-    let shape = Sphere::new(
-        Material::default(),
+    let shape = Shape::new(
         Transformation::new_translation(0., 0., 1.),
+        Material::default(),
+        SPHERE,
     );
-    let i = Intersection::new(5., &shape);
+    let shape = Arc::new(shape);
+    let i = Intersection::new(5., shape);
     let comps = i.prepare_computations(&r);
     assert!(comps.over_point.z() < -EPSILON_F64 / 2.0);
     assert!(comps.point.z() > comps.over_point.z());
