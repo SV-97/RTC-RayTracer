@@ -2,6 +2,10 @@
 
 A simple ray tracer
 
+Gif of images created by the raytracer:
+
+![Planet](./media/Planet.gif)
+
 The shapes could use some refactoring.
 I already tried the following things / thought about them:
 
