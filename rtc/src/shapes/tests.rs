@@ -9,7 +9,7 @@ use crate::{
         ray::Ray,
         vector::{point, vector, Point, Transformation},
     },
-    shading::Material,
+    shading::{Color, Material},
 };
 
 #[test]
@@ -203,7 +203,8 @@ fn precompute_intersection() {
     let shape = Shape::default();
     let shape = Arc::new(shape);
     let i = Intersection::new(4., Arc::clone(&shape));
-    let comps = (i.clone()).prepare_computations(&r);
+    let is = Intersections::new(vec![i.clone()]);
+    let comps = is[0].prepare_computations(&r, &is);
     assert_approx_eq!(comps.t, i.t);
     assert_approx_eq!(comps.object, &shape);
     assert_approx_eq!(comps.point, &point(0., 0., -1.));
@@ -217,14 +218,16 @@ fn precompute_inside() {
     let shape = Shape::default();
     let shape = Arc::new(shape);
     let i = Intersection::new(4., shape);
-    let comps = i.prepare_computations(&r);
+    let is = Intersections::new(vec![i]);
+    let comps = is[0].prepare_computations(&r, &is);
     assert!(!comps.inside);
 
     let r = Ray::new(point(0., 0., 0.), vector(0., 0., 1.));
     let shape = Shape::default();
     let shape = Arc::new(shape);
     let i = Intersection::new(1., shape);
-    let comps = i.prepare_computations(&r);
+    let is = Intersections::new(vec![i]);
+    let comps = is[0].prepare_computations(&r, &is);
     assert_approx_eq!(comps.point, &point(0., 0., 1.));
     assert_approx_eq!(comps.eye, &vector(0., 0., -1.));
     assert!(comps.inside);
@@ -290,6 +293,50 @@ fn precompute_reflection() {
     let a = consts::SQRT_2 / 2.0;
     let r = Ray::new(point(0., 1., -1.), vector(0., -a, a));
     let i = Intersection::new(consts::SQRT_2, plane);
-    let comps = i.prepare_computations(&r);
+    let is = Intersections::new(vec![i]);
+    let comps = is[0].prepare_computations(&r, &is);
     assert_approx_eq!(comps.reflection, &vector(0., a, a));
+}
+
+#[test]
+fn refraction() {
+    let m1 = Material::new(Color::new_rgb(1., 1., 1.), 0.1, 0.9, 0.9, 200., 0., 1., 1.5);
+    let s1 = Arc::new(Shape::new_sphere(
+        m1,
+        Transformation::new_scaling(2., 2., 2.),
+    ));
+    let m2 = Material::new(Color::new_rgb(1., 1., 1.), 0.1, 0.9, 0.9, 200., 0., 1., 2.0);
+    let s2 = Arc::new(Shape::new_sphere(
+        m2,
+        Transformation::new_translation(0., 0., -0.25),
+    ));
+    let m3 = Material::new(Color::new_rgb(1., 1., 1.), 0.1, 0.9, 0.9, 200., 0., 1., 2.5);
+    let s3 = Arc::new(Shape::new_sphere(
+        m3,
+        Transformation::new_translation(0., 0., 0.25),
+    ));
+
+    let r = Ray::new(point(0., 0., -4.), vector(0., 0., 1.));
+    let xs = Intersections::new(vec![
+        Intersection::new(2., Arc::clone(&s1)),
+        Intersection::new(2.75, Arc::clone(&s2)),
+        Intersection::new(3.25, Arc::clone(&s3)),
+        Intersection::new(4.75, Arc::clone(&s2)),
+        Intersection::new(5.25, Arc::clone(&s3)),
+        Intersection::new(6., Arc::clone(&s1)),
+    ]);
+    let vals = vec![
+        // this should actually be the right block but let's try it this way for now
+        (1.0, 1.5), // (1.0, 1.5), //
+        (1.5, 2.0), // (1.5, 2.0), //
+        (2.0, 2.5), // (2.0, 2.5), //
+        (2.5, 2.5), // (2.5, 2.0), //
+        (2.5, 1.5), // (2.0, 2.5), //
+        (1.5, 1.0), // (2.5, 1.5), //
+    ];
+    for (i, (n1, n2)) in vals.into_iter().enumerate() {
+        let comps = xs[i].prepare_computations(&r, &xs);
+        assert_approx_eq!(comps.n1, n1);
+        assert_approx_eq!(comps.n2, n2);
+    }
 }

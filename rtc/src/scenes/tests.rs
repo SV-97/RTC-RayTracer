@@ -8,7 +8,7 @@ use crate::{
         vector::{point, vector, Point, Transformation},
     },
     shading::{Color, Material, PointLight},
-    shapes::{Intersection, Shape, SPHERE},
+    shapes::{Intersection, Intersections, Shape, SPHERE},
 };
 
 use std::{f64::consts, sync::Arc};
@@ -31,7 +31,8 @@ fn shade_intersection() {
     let r = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
     let s = &w.objects[0];
     let i = Intersection::new(4., Arc::clone(s));
-    let comps = i.prepare_computations(&r);
+    let is = Intersections::new(vec![i]);
+    let comps = is[0].prepare_computations(&r, &is);
     let c = w.shade_hit(&comps, 1);
     assert_approx_eq!(c, Color::new_rgb(0.38066, 0.47583, 0.2855));
 }
@@ -46,7 +47,8 @@ fn shade_intersection_inside() {
     let r = Ray::new(point(0., 0., 0.), vector(0., 0., 1.));
     let s = &w.objects[1];
     let i = Intersection::new(0.5, Arc::clone(s));
-    let comps = i.prepare_computations(&r);
+    let is = Intersections::new(vec![i]);
+    let comps = is[0].prepare_computations(&r, &is);
     let c = w.shade_hit(&comps, 1);
     assert_approx_eq!(c, Color::new_rgb(0.90498, 0.90498, 0.90498));
 }
@@ -189,7 +191,8 @@ fn shade_hit_intersection_in_shadow() {
     );
     let r = Ray::new(point(0., 0., 5.), vector(0., 0., 1.));
     let i = Intersection::new(4., Arc::new(s2));
-    let comps = i.prepare_computations(&r);
+    let is = Intersections::new(vec![i]);
+    let comps = is[0].prepare_computations(&r, &is);
     let c = w.shade_hit(&comps, 1);
     assert_approx_eq!(c, Color::new_rgb(0.1, 0.1, 0.1));
 }
@@ -204,7 +207,8 @@ fn shadow_hit_offset_point() {
     );
     let shape = Arc::new(shape);
     let i = Intersection::new(5., shape);
-    let comps = i.prepare_computations(&r);
+    let is = Intersections::new(vec![i]);
+    let comps = is[0].prepare_computations(&r, &is);
     assert!(comps.over_point.z() < -EPSILON_F64 / 2.0);
     assert!(comps.point.z() > comps.over_point.z());
 }
@@ -214,7 +218,16 @@ fn nonreflective_reflection() {
     let light = PointLight::new(point(-10., 10., -10.), Color::new_rgb(1., 1., 1.));
     let s1 = Shape::new(
         SPHERE,
-        Material::new(Color::new_rgb(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0, 0.),
+        Material::new(
+            Color::new_rgb(0.8, 1.0, 0.6),
+            0.1,
+            0.7,
+            0.2,
+            200.0,
+            0.,
+            0.,
+            1.,
+        ),
         Transformation::identity(),
     );
     let mut s2 = Shape::default();
@@ -224,7 +237,8 @@ fn nonreflective_reflection() {
     let r = Ray::new(Point::origin(), vector(0., 0., 1.));
     let shape = &w.objects[1];
     let i = Intersection::new(1., Arc::clone(shape));
-    let comps = i.prepare_computations(&r);
+    let is = Intersections::new(vec![i]);
+    let comps = is[0].prepare_computations(&r, &is);
     let color = w.reflected_color(&comps, 1);
     assert_approx_eq!(color, Color::black());
 }
@@ -242,9 +256,11 @@ fn reflective_reflection() {
     let a = consts::SQRT_2 / 2.0;
     let r = Ray::new(point(0., 0., -3.), vector(0., -a, a));
     let i = Intersection::new(consts::SQRT_2, Arc::clone(&shape));
-    let comps = i.prepare_computations(&r);
+    let is = Intersections::new(vec![i]);
+    let comps = is[0].prepare_computations(&r, &is);
     let color = w.reflected_color(&comps, 1);
-    assert_approx_eq!(color, Color::new_rgb(0.190347, 0.23793, 0.14276));
+    // assert_approx_eq!(color, Color::new_rgb(0.190347, 0.23793, 0.14276));
+    assert_approx_eq!(color, Color::new_rgb(0.19032, 0.2379, 0.14274));
 }
 
 #[test]
@@ -260,7 +276,8 @@ fn shade_hit_with_reflective_mat() {
     let a = consts::SQRT_2 / 2.0;
     let r = Ray::new(point(0., 0., -3.), vector(0., -a, a));
     let i = Intersection::new(consts::SQRT_2, Arc::clone(&shape));
-    let comps = i.prepare_computations(&r);
+    let is = Intersections::new(vec![i]);
+    let comps = is[0].prepare_computations(&r, &is);
     let color = w.shade_hit(&comps, 1);
     assert_approx_eq!(color, Color::new_rgb(0.87677, 0.92436, 0.82918));
 }
@@ -293,7 +310,89 @@ fn reflection_at_maximum_recursion() {
     let a = consts::SQRT_2 / 2.0;
     let r = Ray::new(point(0., 0., -3.), vector(0., -a, a));
     let i = Intersection::new(consts::SQRT_2, Arc::clone(&shape));
-    let comps = i.prepare_computations(&r);
+    let is = Intersections::new(vec![i]);
+    let comps = is[0].prepare_computations(&r, &is);
     let color = w.reflected_color(&comps, 0);
     assert_approx_eq!(color, Color::new_rgb(0., 0., 0.));
+}
+
+#[test]
+fn refactored_opaque() {
+    let w = World::default();
+    let shape = &w.objects[0];
+    let r = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
+    let xs = Intersections::new(vec![
+        Intersection::new(4., Arc::clone(shape)),
+        Intersection::new(6., Arc::clone(shape)),
+    ]);
+    let comps = xs[0].prepare_computations(&r, &xs);
+    let c = w.refracted_color(&comps, 5);
+    assert_approx_eq!(c, Color::black());
+}
+
+#[test]
+fn refactored_at_max_depth() {
+    let w = {
+        let light = PointLight::new(point(-10., 10., -10.), Color::new_rgb(1., 1., 1.));
+        let s1 = Shape::new(
+            SPHERE,
+            Material::new(
+                Color::new_rgb(0.8, 1.0, 0.6),
+                0.1,
+                0.7,
+                0.2,
+                200.0,
+                0.,
+                1.,
+                1.5,
+            ),
+            Transformation::identity(),
+        );
+        let mut s2 = Shape::default();
+        s2.modify_transform(|t| t.scale(0.5, 0.5, 0.5));
+        World::new(vec![s1, s2], vec![light])
+    };
+    let shape = &w.objects[0];
+    let r = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
+    let xs = Intersections::new(vec![
+        Intersection::new(4., Arc::clone(shape)),
+        Intersection::new(6., Arc::clone(shape)),
+    ]);
+    let comps = xs[0].prepare_computations(&r, &xs);
+    let c = w.refracted_color(&comps, 0);
+    assert_approx_eq!(c, Color::black());
+}
+
+#[test]
+fn total_internal_reflection() {
+    let w = {
+        let light = PointLight::new(point(-10., 10., -10.), Color::new_rgb(1., 1., 1.));
+        let s1 = Shape::new(
+            SPHERE,
+            Material::new(
+                Color::new_rgb(1., 1.0, 1.),
+                0.1,
+                0.9,
+                0.9,
+                200.0,
+                0.,
+                1.,
+                1.5,
+            ),
+            Transformation::identity(),
+        );
+        let mut s2 = Shape::default();
+        s2.modify_transform(|t| t.scale(0.5, 0.5, 0.5));
+        World::new(vec![s1, s2], vec![light])
+    };
+    let shape = &w.objects[0];
+    let a = consts::SQRT_2 / 2.0;
+    let r = Ray::new(point(0., 0., a), vector(0., 1., 0.));
+    let xs = Intersections::new(vec![
+        Intersection::new(-a, Arc::clone(shape)),
+        Intersection::new(a, Arc::clone(shape)),
+    ]);
+    let comps = xs[1].prepare_computations(&r, &xs);
+    let c = w.refracted_color(&comps, 5);
+    assert_approx_eq!(c, Color::black());
 }

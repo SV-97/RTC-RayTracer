@@ -19,7 +19,7 @@ impl Intersection {
         Intersection { t, object }
     }
 
-    pub fn prepare_computations(self, ray: &Ray) -> PreComp {
+    pub fn prepare_computations(&self, ray: &Ray, xs: &Intersections) -> PreComp {
         let point = ray.position(self.t);
         let eye = -ray.direction.clone();
         let mut normal = (self.object.normal_at)(self.object.clone(), &point);
@@ -27,9 +27,55 @@ impl Intersection {
         if inside {
             normal = -normal;
         }
+        // 10.0 is a factor that may be tweaked depending on visual artifacts
         let over_point = &point + &normal * EPSILON_F64 * 10.0;
+        let under_point = &point - &normal * EPSILON_F64 * 10.0;
         let reflection = ray.direction.reflect(&normal);
-        PreComp::new(point, eye, normal, reflection, self, inside, over_point)
+
+        let mut containers: Vec<&Arc<Shape>> = Vec::new();
+        let mut n1 = None;
+        let mut n2 = None;
+        for intersection in xs.iter() {
+            // no too sure about this
+            let i_eq_hit = self as *const _ == intersection as *const _;
+            if i_eq_hit {
+                n1 = Some(
+                    containers
+                        .last()
+                        .map(|o| o.material.refractive_index)
+                        .unwrap_or(1.0),
+                );
+            }
+            if let Some(position) = containers
+                .iter()
+                .position(|x| x as *const _ == &&intersection.object as *const _)
+            {
+                containers.remove(position);
+            } else {
+                containers.push(&intersection.object);
+            }
+            if i_eq_hit {
+                n2 = Some(
+                    containers
+                        .last()
+                        .map(|o| o.material.refractive_index)
+                        .unwrap_or(1.0),
+                );
+                break;
+            }
+        }
+        PreComp::new(
+            point,
+            eye,
+            normal,
+            reflection,
+            self.clone(),
+            inside,
+            over_point,
+            under_point,
+            n1.unwrap(),
+            n2.unwrap(),
+        )
     }
 }
 
@@ -115,6 +161,9 @@ pub struct PreComp {
     pub object: Arc<Shape>,
     pub inside: bool,
     pub over_point: Point,
+    pub under_point: Point,
+    pub n1: f32,
+    pub n2: f32,
 }
 
 impl PreComp {
@@ -126,6 +175,9 @@ impl PreComp {
         intersection: Intersection,
         inside: bool,
         over_point: Point,
+        under_point: Point,
+        n1: f32,
+        n2: f32,
     ) -> Self {
         PreComp {
             point,
@@ -136,6 +188,9 @@ impl PreComp {
             inside,
             over_point,
             reflection,
+            n1,
+            n2,
+            under_point,
         }
     }
 }

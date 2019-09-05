@@ -12,6 +12,10 @@ pub struct Material {
     pub shininess: f32,
     /// Reflectiveness of the material. 0 is nonreflective, 1 is perfect mirror.
     pub reflectiveness: f32,
+    /// How transparent the material is. 0 means opaque
+    pub transparency: f32,
+    /// 1 means "empty", vacuum like behaviour
+    pub refractive_index: f32,
 }
 
 impl Material {
@@ -23,6 +27,8 @@ impl Material {
         specular: f32,
         shininess: f32,
         reflectiveness: f32,
+        transparency: f32,
+        refractive_index: f32,
     ) -> Self {
         Material {
             color,
@@ -32,6 +38,8 @@ impl Material {
             shininess,
             pattern,
             reflectiveness,
+            transparency,
+            refractive_index,
         }
     }
 
@@ -42,6 +50,8 @@ impl Material {
         specular: f32,
         shininess: f32,
         reflectiveness: f32,
+        transparency: f32,
+        refractive_index: f32,
     ) -> Self {
         Self::new_with_pattern(
             color,
@@ -51,13 +61,15 @@ impl Material {
             specular,
             shininess,
             reflectiveness,
+            transparency,
+            refractive_index,
         )
     }
 }
 
 impl Default for Material {
     fn default() -> Self {
-        Material::new(Color::new_rgb(1., 1., 1.), 0.1, 0.9, 0.9, 200., 0.)
+        Material::new(Color::new_rgb(1., 1., 1.), 0.1, 0.9, 0.9, 200., 0., 0., 1.)
     }
 }
 

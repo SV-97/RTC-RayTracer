@@ -11,7 +11,7 @@ impl ApproxEq for f64 {
     }
 }
 
-pub const EPSILON_F32: f32 = 0.1e-4;
+pub const EPSILON_F32: f32 = 0.1e-3;
 impl ApproxEq for f32 {
     fn approx_eq(self, other: Self) -> bool {
         (self - other).abs() < EPSILON_F32

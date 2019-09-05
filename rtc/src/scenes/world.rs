@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{
     primitives::{
         ray::Ray,
-        vector::{point, Point, Transformation},
+        vector::{point, Point, ScalarProd, Transformation},
     },
     shading::{Color, Material, PointLight},
     shapes::{Intersections, PreComp, Shape, SPHERE},
@@ -70,7 +70,8 @@ impl World {
                     shadowed,
                 );
                 let reflected = self.reflected_color(comp, remaining_recursions);
-                surface + reflected
+                let refracted = self.refracted_color(comp, remaining_recursions);
+                surface + reflected + refracted
             })
             .fold(None, |blend: Option<Color>, new_color| match blend {
                 Some(blend) => Some(new_color.blend_lighten_only(blend)),
@@ -83,7 +84,7 @@ impl World {
         let is = self.intersect(ray);
         match is.hit() {
             Some(hit) => {
-                let precomp = hit.clone().prepare_computations(ray);
+                let precomp = hit.prepare_computations(ray, &is);
                 self.shade_hit(&precomp, remaining_recursions)
             }
             None => Color::black(),
@@ -101,6 +102,22 @@ impl World {
             color * comps.object.material.reflectiveness
         }
     }
+
+    pub fn refracted_color(&self, comps: &PreComp, remaining_recursions: usize) -> Color {
+        if remaining_recursions == 0 || comps.object.material.transparency == 0.0 {
+            Color::black()
+        } else {
+            // Handle total internal reflection. Implementation based on Snell's Law
+            let n_ratio = comps.n1 / comps.n2;
+            let cos_i = (&comps.eye).scalar_prod(&comps.normal);
+            let sin2_t = n_ratio.powi(2) as f64 * (1. - cos_i.powi(2));
+            if sin2_t > 1.0 {
+                Color::black()
+            } else {
+                Color::white()
+            }
+        }
+    }
 }
 
 impl Default for World {
@@ -108,7 +125,16 @@ impl Default for World {
         let light = PointLight::new(point(-10., 10., -10.), Color::new_rgb(1., 1., 1.));
         let s1 = Shape::new(
             SPHERE,
-            Material::new(Color::new_rgb(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0, 0.),
+            Material::new(
+                Color::new_rgb(0.8, 1.0, 0.6),
+                0.1,
+                0.7,
+                0.2,
+                200.0,
+                0.,
+                0.,
+                1.,
+            ),
             Transformation::identity(),
         );
         let mut s2 = Shape::default();

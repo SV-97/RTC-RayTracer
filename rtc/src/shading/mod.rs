@@ -6,8 +6,10 @@ pub use builtin_patterns::*;
 pub use lights::*;
 pub use material::*;
 pub use pattern::*;
+pub use builtin_materials::*;
 
 mod builtin_patterns;
+mod builtin_materials;
 mod lights;
 mod material;
 mod pattern;
