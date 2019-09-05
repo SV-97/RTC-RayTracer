@@ -8,7 +8,7 @@ use crate::{
         vector::{point, vector, Point, Transformation},
     },
     scenes::{Camera, World},
-    shading::{Color, Material, PointLight},
+    shading::*,
     shapes::{Shape, SPHERE},
     utils::typelevel_nums::*,
 };
@@ -16,14 +16,14 @@ use crate::{
 use std::f64::consts;
 
 pub fn world_rendering_1() -> std::io::Result<()> {
-    let green = Material::new(Color::from((50, 255, 60)) * 0.8, 0.3, 0.4, 0.6, 200.);
-    let grey = Material::new(Color::from((50, 50, 50)), 0.3, 0.6, 0.4, 0.7);
-    let purpleish = Material::new(Color::from((220, 20, 220)) * 0.5, 0.3, 0.5, 0.4, 1000.);
-    let base_mat = Material::new(Color::from((30, 30, 30)), 0.3, 0.5, 0., 50.);
+    let green = Material::new(Color::from((50, 255, 60)) * 0.8, 0.3, 0.4, 0.6, 200., 0.);
+    let grey = Material::new(Color::from((50, 50, 50)), 0.3, 0.6, 0.4, 0.7, 0.);
+    let purpleish = Material::new(Color::from((220, 20, 220)) * 0.5, 0.3, 0.5, 0.4, 1000., 0.);
+    let base_mat = Material::new(Color::from((30, 30, 30)), 0.3, 0.5, 0., 50., 0.);
 
-    let arrow_red = Material::new(Color::red(), 0.3, 0.5, 0., 500.);
-    let arrow_green = Material::new(Color::green(), 0.3, 0.5, 0., 500.);
-    let arrow_blue = Material::new(Color::blue(), 0.3, 0.5, 0., 500.);
+    let arrow_red = Material::new(Color::red(), 0.3, 0.5, 0., 500., 0.);
+    let arrow_green = Material::new(Color::green(), 0.3, 0.5, 0., 500., 0.);
+    let arrow_blue = Material::new(Color::blue(), 0.3, 0.5, 0., 500., 0.);
 
     let world = World::new(
         vec![
@@ -43,17 +43,17 @@ pub fn world_rendering_1() -> std::io::Result<()> {
             // floors and walls
             Shape::new(
                 SPHERE,
-                base_mat,
+                base_mat.clone(),
                 Transformation::new_scaling(1000., 1000., 0.01),
             ),
             Shape::new(
                 SPHERE,
-                base_mat,
+                base_mat.clone(),
                 Transformation::new_scaling(0.01, 1000., 1000.),
             ),
             Shape::new(
                 SPHERE,
-                base_mat,
+                base_mat.clone(),
                 Transformation::new_scaling(1000., 0.01, 1000.),
             ),
             // arrow thingies
@@ -94,12 +94,12 @@ pub fn world_rendering_1() -> std::io::Result<()> {
 }
 
 pub fn world_rendering_2() -> std::io::Result<()> {
-    let grey = Material::new(Color::from((50, 50, 50)), 0.3, 0.6, 0.4, 1000.);
-    let base_mat = Material::new(Color::from((70, 70, 70)), 0.3, 0.5, 0., 50.);
+    let grey = Material::new(Color::from((50, 50, 50)), 0.3, 0.6, 0.4, 1000., 0.);
+    let base_mat = Material::new(Color::from((70, 70, 70)), 0.3, 0.5, 0., 50., 0.5);
 
-    let arrow_red = Material::new(Color::red(), 0.3, 0.5, 0., 500.);
-    let arrow_green = Material::new(Color::green(), 0.3, 0.5, 0., 500.);
-    let arrow_blue = Material::new(Color::blue(), 0.3, 0.5, 0., 500.);
+    let arrow_red = Material::new(Color::red(), 0.3, 0.5, 0., 500., 0.);
+    let arrow_green = Material::new(Color::green(), 0.3, 0.5, 0., 500., 0.);
+    let arrow_blue = Material::new(Color::blue(), 0.3, 0.5, 0., 500., 0.);
 
     let light_setup = Transformation::new_translation(3., 12., 0.).rotated_y(consts::FRAC_PI_4);
     let light_move = Transformation::new_translation(6., 0., 6.);
@@ -109,26 +109,26 @@ pub fn world_rendering_2() -> std::io::Result<()> {
 
     let world = World::new(
         vec![
-            Shape::new_sphere(grey, Transformation::new_translation(6., 3., 6.)),
+            Shape::new_sphere(grey.clone(), Transformation::new_translation(6., 3., 6.)),
             Shape::new(
                 SPHERE,
-                grey,
+                grey.clone(),
                 Transformation::new_scaling(1., 3., 1.).translated(6., 8., 6.),
             ),
             // floors and walls
             Shape::new(
                 SPHERE,
-                base_mat,
+                base_mat.clone(),
                 Transformation::new_scaling(1000., 1000., 0.01),
             ),
             Shape::new(
                 SPHERE,
-                base_mat,
+                base_mat.clone(),
                 Transformation::new_scaling(0.01, 1000., 1000.),
             ),
             Shape::new(
                 SPHERE,
-                base_mat,
+                base_mat.clone(),
                 Transformation::new_scaling(1000., 0.01, 1000.),
             ),
             // arrow thingies
@@ -161,8 +161,8 @@ pub fn world_rendering_2() -> std::io::Result<()> {
     let up = vector(0., 1., 0.);
 
     let camera = Camera::new(
-        4096,
-        2160,
+        2048,
+        1080,
         consts::FRAC_PI_2,
         Transformation::new_view(&from, &to, &up),
     );
@@ -174,21 +174,21 @@ pub fn world_rendering_2() -> std::io::Result<()> {
 }
 
 pub fn world_rendering_3() -> std::io::Result<()> {
-    let blue = Material::new(Color::from((30, 0, 200)), 0.3, 0.2, 0.1, 1.);
-    let whiteish = Material::new(Color::from((50, 50, 70)), 0.1, 0.3, 0.3, 1.);
-    let space_blue = Material::new(Color::from((0, 0, 20)), 0.8, 0.5, 0., 50.);
+    let blue = Material::new(Color::from((30, 0, 200)), 0.3, 0.2, 0.1, 1., 0.);
+    let whiteish = Material::new(Color::from((50, 50, 70)), 0.1, 0.3, 0.3, 1., 0.);
+    let space_blue = Material::new(Color::from((0, 0, 20)), 0.8, 0.5, 0., 50., 0.);
 
     let frames = 36;
     for i in 0..frames {
         let angle = consts::PI * 2. * i as f64 / frames as f64;
         let world = World::new(
             vec![
-                Shape::new_sphere(blue, Transformation::new_scaling(5., 5., 5.)),
+                Shape::new_sphere(blue.clone(), Transformation::new_scaling(5., 5., 5.)),
                 Shape::new_sphere(
-                    whiteish,
+                    whiteish.clone(),
                     Transformation::new_translation(-5., 3., 2.).rotated_y(angle),
                 ),
-                Shape::new_plane(space_blue, Transformation::identity()),
+                Shape::new_plane(space_blue.clone(), Transformation::identity()),
             ],
             vec![PointLight::new(point(-100., 10., 0.), Color::white() * 3.8)],
         );
@@ -207,6 +207,166 @@ pub fn world_rendering_3() -> std::io::Result<()> {
         let canvas = camera.render(world);
 
         let r = Rendering::new(format!("world_render_3_{}", i), canvas);
+        r.save_to_file()?
+    }
+    Ok(())
+}
+
+pub fn world_rendering_4() -> std::io::Result<()> {
+    let whiteish = Material::new_with_pattern(
+        Color::from((50, 50, 70)),
+        Some(Pattern::new(
+            STRIPE_X_WHITE_BLACK,
+            Transformation::identity(),
+        )),
+        0.1,
+        0.3,
+        0.3,
+        1.,
+        0.05,
+    );
+    let red_blue = Material::new_with_pattern(
+        Color::from((50, 50, 50)),
+        Some(Pattern::new(
+            GRADIENT_X_RED_BLUE,
+            Transformation::new_translation(0.5, 0., 0.).scaled(2., 1., 1.),
+        )),
+        0.3,
+        0.6,
+        0.4,
+        1000.,
+        0.1,
+    );
+    let world = World::new(
+        vec![
+            Shape::new_sphere(red_blue.clone(), Transformation::new_scaling(3., 3., 3.)),
+            Shape::new_sphere(
+                red_blue.clone(),
+                Transformation::new_scaling(3., 3., 3.)
+                    .rotated_z(consts::FRAC_PI_3)
+                    .translated(4., 5., -20.),
+            ),
+            Shape::new_sphere(
+                red_blue.clone(),
+                Transformation::new_scaling(3., 3., 3.)
+                    .rotated_z(consts::FRAC_PI_3 * 2.)
+                    .translated(8., 10., -40.),
+            ),
+            Shape::new_plane(
+                whiteish.clone(),
+                Transformation::new_translation(0., -3., 0.),
+            ),
+            Shape::new_plane(
+                whiteish.clone(),
+                Transformation::new_translation(0., 13., 0.),
+            ),
+            Shape::new_plane(
+                whiteish.clone(),
+                Transformation::new_z_rotation(consts::FRAC_PI_2).translated(-5., 0., 0.),
+            ),
+        ],
+        vec![PointLight::new(point(10., 10., 0.), Color::white() * 3.8)],
+    );
+
+    let from = point(12., 6., 12.);
+    let to = point(0., 4., 0.);
+    let up = vector(0., 1., 0.);
+
+    let camera = Camera::new(
+        2048,
+        1080,
+        consts::FRAC_PI_2,
+        Transformation::new_view(&from, &to, &up),
+    );
+
+    let canvas = camera.render(world);
+    let r = Rendering::new("world_render_4", canvas);
+    r.save_to_file()
+}
+
+pub fn world_rendering_5() -> std::io::Result<()> {
+    // Same as 2 but for animation
+    let grey = Material::new(Color::from((50, 50, 50)), 0.3, 0.6, 0.4, 1000., 0.);
+    let base_mat = Material::new(Color::from((70, 70, 70)), 0.3, 0.5, 0., 50., 1.);
+
+    let arrow_red = Material::new(Color::red(), 0.3, 0.5, 0., 500., 0.);
+    let arrow_green = Material::new(Color::green(), 0.3, 0.5, 0., 500., 0.);
+    let arrow_blue = Material::new(Color::blue(), 0.3, 0.5, 0., 500., 0.);
+
+    let light_setup = Transformation::new_translation(3., 12., 0.).rotated_y(consts::FRAC_PI_4);
+    let light_move = Transformation::new_translation(6., 0., 6.);
+    let frames = 36;
+    for i in 0..frames {
+        let angle = consts::PI * 2. * i as f64 / frames as f64;
+        let l1 = &light_move * (&light_setup * Point::origin()).rotated_y(angle);
+        let l2 = &light_move
+            * (&light_setup * Point::origin()).rotated_y(consts::FRAC_PI_3 * 2.0 + angle);
+        let l3 = &light_move
+            * (&light_setup * Point::origin()).rotated_y(consts::FRAC_PI_3 * 4.0 + angle);
+
+        let world = World::new(
+            vec![
+                Shape::new_sphere(grey.clone(), Transformation::new_translation(6., 3., 6.)),
+                Shape::new(
+                    SPHERE,
+                    grey.clone(),
+                    Transformation::new_scaling(1., 3., 1.).translated(6., 8., 6.),
+                ),
+                // floors and walls
+                Shape::new(
+                    SPHERE,
+                    base_mat.clone(),
+                    Transformation::new_scaling(1000., 1000., 0.01),
+                ),
+                Shape::new(
+                    SPHERE,
+                    base_mat.clone(),
+                    Transformation::new_scaling(0.01, 1000., 1000.),
+                ),
+                Shape::new(
+                    SPHERE,
+                    base_mat.clone(),
+                    Transformation::new_scaling(1000., 0.01, 1000.),
+                ),
+                // arrow thingies
+                Shape::new(
+                    SPHERE,
+                    arrow_blue.clone(),
+                    Transformation::new_scaling(1000., 0.1, 0.1),
+                ),
+                Shape::new(
+                    SPHERE,
+                    arrow_green.clone(),
+                    Transformation::new_scaling(0.1, 1000., 0.1),
+                ),
+                Shape::new(
+                    SPHERE,
+                    arrow_red.clone(),
+                    Transformation::new_scaling(0.1, 0.1, 1000.),
+                ),
+            ],
+            vec![
+                PointLight::new(point(6., 13., 6.), Color::white() * 0.8),
+                PointLight::new(l1, Color::from((100, 20, 20)) * 3.),
+                PointLight::new(l2, Color::from((20, 20, 100)) * 3.),
+                PointLight::new(l3, Color::from((20, 100, 20)) * 3.),
+            ],
+        );
+
+        let from = point(12., 6., 12.);
+        let to = point(0., 4., 0.);
+        let up = vector(0., 1., 0.);
+
+        let camera = Camera::new(
+            2048,
+            1080,
+            consts::FRAC_PI_2,
+            Transformation::new_view(&from, &to, &up),
+        );
+
+        let canvas = camera.render(world);
+
+        let r = Rendering::new(format!("world_render_5_{}", i), canvas);
         r.save_to_file()?
     }
     Ok(())

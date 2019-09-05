@@ -1,9 +1,9 @@
 #![recursion_limit = "4096"]
 #![allow(clippy::cast_lossless)]
+#![allow(dead_code)]
 extern crate num_traits;
 
 mod examples;
-#[allow(dead_code)]
 mod primitives;
 mod profile;
 mod scenes;
@@ -12,5 +12,5 @@ mod shapes;
 mod utils;
 
 fn main() {
-    let _ = examples::world_rendering::world_rendering_3().map_err(|e| println!("{}", e));
+    let _ = examples::world_rendering::world_rendering_2().map_err(|e| println!("{}", e));
 }
