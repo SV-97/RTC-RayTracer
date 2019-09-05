@@ -6,7 +6,7 @@ use crate::{
     primitives::{
         approx_eq::EPSILON_F64,
         ray::Ray,
-        vector::{vector, Point, ScalarProd, Transformation, Vec3D},
+        vector::{vector, Point, Transformation, Vec3D},
     },
     shading::Material,
 };
@@ -14,10 +14,12 @@ use crate::{
 pub static PLANE: ShapeFuncs = (intersect, normal_at);
 
 fn intersect(shape: Arc<Shape>, ray: &Ray) -> Option<Intersections> {
-    if ray.direction.y().abs() < EPSILON_F64 {
+    let inverse = shape.inverse_transform();
+    let ray2 = ray.transform(inverse);
+    if ray2.direction.y().abs() < EPSILON_F64 {
         None
     } else {
-        let t = -ray.origin.y() / ray.direction.y();
+        let t = -ray2.origin.y() / ray2.direction.y();
         Some(Intersections::new(vec![Intersection::new(t, shape)]))
     }
 }

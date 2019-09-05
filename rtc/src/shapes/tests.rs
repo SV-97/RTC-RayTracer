@@ -1,3 +1,4 @@
+use std::f64::consts;
 use std::sync::Arc;
 
 use super::*;
@@ -180,9 +181,7 @@ fn normal_normalization() {
 #[test]
 fn normal_of_translated_sphere() {
     let mut s = Shape::default();
-    s.modify_transform(|t| {
-        t.translate(0., 1., 0.);
-    });
+    s.modify_transform(|t| t.translate(0., 1., 0.));
     let s = Arc::new(s);
     let n = (s.normal_at)(s, &point(0., 1.70711, -0.70711));
     assert_approx_eq!(n, &vector(0., 0.70711, -0.70711));
@@ -190,11 +189,8 @@ fn normal_of_translated_sphere() {
 
 #[test]
 fn normal_of_transformed_sphere() {
-    use std::f64::consts;
     let mut s = Shape::default();
-    s.modify_transform(|t| {
-        t.rotate_z(consts::PI / 5.).scale(1., 0.5, 1.);
-    });
+    s.modify_transform(|t| t.rotate_z(consts::PI / 5.).scale(1., 0.5, 1.));
     let s = Arc::new(s);
     let a = consts::SQRT_2 / 2.0;
     let n = (s.normal_at)(s, &point(0., a, -a));

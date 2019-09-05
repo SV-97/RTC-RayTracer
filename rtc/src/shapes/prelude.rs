@@ -1,5 +1,4 @@
-use std::fmt;
-use std::sync::Arc;
+use std::{fmt, sync::Arc};
 
 use crate::{
     primitives::{
@@ -24,7 +23,6 @@ pub struct Shape {
     pub material: Material,
     pub intersect: IntersectFunc,
     pub normal_at: NormalAtFunc,
-    // pub self_rc: Option<Rc<Self>>,
 }
 
 impl fmt::Debug for Shape {
@@ -65,7 +63,7 @@ impl Shape {
         self.inverse_transform = self.transform.invert().unwrap();
     }
 
-    pub fn modify_transform(&mut self, f: impl Fn(&mut Transformation)) {
+    pub fn modify_transform(&mut self, f: impl Fn(&mut Transformation) -> &mut Transformation) {
         f(&mut self.transform);
         self.inverse_transform = self.transform.invert().unwrap();
     }
@@ -76,6 +74,3 @@ impl ApproxEq for &Shape {
         self.transform.approx_eq(&other.transform) && self.material.approx_eq(&other.material)
     }
 }
-
-impl<'a, T> IsShape for T
-where Shape<T>: Render<'a, T> {}
