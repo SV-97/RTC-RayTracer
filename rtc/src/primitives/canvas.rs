@@ -1,6 +1,8 @@
-use std::convert::TryInto;
-use std::f32;
-use std::ops::{Index, IndexMut};
+use std::{
+    convert::TryInto,
+    f32,
+    ops::{Index, IndexMut},
+};
 
 use crate::utils::{clamp, split_long_lines};
 

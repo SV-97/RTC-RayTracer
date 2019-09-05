@@ -1,12 +1,13 @@
 use crate::primitives::approx_eq::ApproxEq;
 
-use super::Color;
+use super::{Color, Pattern};
 
-use crate::primitives::approx_eq::ApproxEq;
+#[derive(Debug, Clone)]
 
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub struct Material {
     pub color: Color,
+    pub pattern: Option<Pattern>,
     pub ambient: f32,
     pub diffuse: f32,
     pub specular: f32,
@@ -14,14 +15,37 @@ pub struct Material {
 }
 
 impl Material {
-    pub fn new(color: Color, ambient: f32, diffuse: f32, specular: f32, shininess: f32) -> Self {
+    pub fn new_with_pattern(
+        color: Color,
+        pattern: Option<Pattern>,
+        ambient: f32,
+        diffuse: f32,
+        specular: f32,
+        shininess: f32,
         Material {
             color,
             ambient,
             diffuse,
             specular,
             shininess,
+            pattern,
         }
+    }
+    pub fn new(
+        color: Color,
+        ambient: f32,
+        diffuse: f32,
+        specular: f32,
+        shininess: f32,
+    ) -> Self {
+        Self::new_with_pattern(
+            color,
+            None,
+            ambient,
+            diffuse,
+            specular,
+            shininess,
+        )
     }
 }
 

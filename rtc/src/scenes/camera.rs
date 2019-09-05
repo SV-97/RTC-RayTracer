@@ -1,6 +1,7 @@
-use std::sync::mpsc::sync_channel;
-use std::sync::{Arc, RwLock};
-use std::thread::spawn;
+use std::{
+    sync::{mpsc::sync_channel, Arc, RwLock},
+    thread::spawn,
+};
 
 use crate::primitives::{
     canvas::Canvas,

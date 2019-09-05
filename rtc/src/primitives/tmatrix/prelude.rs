@@ -1,9 +1,6 @@
 //! Struct definition, construction macro, constructor, printing etc.
 
-use std::cmp;
-use std::convert::From;
-use std::fmt;
-use std::marker::PhantomData;
+use std::{cmp, convert::From, fmt, marker::PhantomData};
 
 use crate::{primitives::approx_eq::ApproxEq, utils::typelevel_nums::*};
 

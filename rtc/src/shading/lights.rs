@@ -1,4 +1,9 @@
-use crate::primitives::vector::{Point, ScalarProd, Vec3D};
+use std::sync::Arc;
+
+use crate::{
+    primitives::vector::{Point, ScalarProd, Vec3D},
+    shapes::Shape,
+};
 
 use super::{Color, Material};
 
@@ -16,15 +21,22 @@ impl PointLight {
         }
     }
 
+    /// Calculate the color of some point in space
     pub fn lighting(
         &self,
+        object: Arc<Shape>,
         material: &Material,
         point: &Point,
         eye: &Vec3D,
         normal: &Vec3D,
         in_shadow: bool,
     ) -> Color {
-        let effective_color = material.color * self.intensity;
+        let color = if let Some(pattern) = &material.pattern {
+            pattern.at(object, point)
+        } else {
+            material.color
+        };
+        let effective_color = color * self.intensity;
         let ambient = effective_color * material.ambient;
         if in_shadow {
             ambient

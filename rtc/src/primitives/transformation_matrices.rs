@@ -11,8 +11,7 @@ use crate::{
     utils::typelevel_nums::*,
 };
 
-use super::tmatrix::Matrix;
-use super::vector::Vec4D;
+use super::{tmatrix::Matrix, vector::Vec4D};
 
 pub type Matrix4x4<T> = Matrix<T, N4, N4>;
 
@@ -312,8 +311,7 @@ mod tests {
     };
     use std::f64::consts;
 
-    use super::super::approx_eq::ApproxEq;
-    use super::*;
+    use super::{super::approx_eq::ApproxEq, *};
     #[test]
     fn translate_point() {
         let p = point(-3., 4., 5.);

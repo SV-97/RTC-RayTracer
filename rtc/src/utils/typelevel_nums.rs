@@ -5,8 +5,7 @@
 
 // Also see the peano crate for a more in depths (in some regards) implementation of this.
 
-use std::fmt;
-use std::marker::PhantomData;
+use std::{fmt, marker::PhantomData};
 
 /// The mathematical set Z
 //pub trait Int {}

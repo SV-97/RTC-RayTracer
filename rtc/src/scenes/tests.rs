@@ -12,8 +12,7 @@ use crate::{
     utils::typelevel_nums::*,
 };
 
-use std::f64::consts;
-use std::sync::Arc;
+use std::{f64::consts, sync::Arc};
 
 #[test]
 fn intersect() {

@@ -1,5 +1,7 @@
-use std::convert::From;
-use std::ops::{Add, Mul, Sub};
+use std::{
+    convert::From,
+    ops::{Add, Mul, Sub},
+};
 
 use super::approx_eq::{ApproxEq, EPSILON_F32};
 
