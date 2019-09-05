@@ -56,18 +56,21 @@ impl World {
             .collect::<Vec<_>>()
     }
 
-    pub fn shade_hit(&self, comp: &PreComp) -> Color {
+    pub fn shade_hit(&self, comp: &PreComp, remaining_recursions: usize) -> Color {
         self.lights
             .iter()
             .zip(self.is_shadowed(&comp.over_point).into_iter())
             .map(|(light, shadowed)| {
-                light.lighting(
+                let surface = light.lighting(
+                    Arc::clone(&comp.object),
                     &comp.object.material,
                     &comp.point,
                     &comp.eye,
                     &comp.normal,
                     shadowed,
-                )
+                );
+                let reflected = self.reflected_color(comp, remaining_recursions);
+                surface + reflected
             })
             .fold(None, |blend: Option<Color>, new_color| match blend {
                 Some(blend) => Some(new_color.blend_lighten_only(blend)),
@@ -76,14 +79,26 @@ impl World {
             .unwrap()
     }
 
-    pub fn color_at(&self, ray: &Ray) -> Color {
+    pub fn color_at(&self, ray: &Ray, remaining_recursions: usize) -> Color {
         let is = self.intersect(ray);
         match is.hit() {
             Some(hit) => {
                 let precomp = hit.clone().prepare_computations(ray);
-                self.shade_hit(&precomp)
+                self.shade_hit(&precomp, remaining_recursions)
             }
             None => Color::black(),
+        }
+    }
+
+    /// Get the reflected color, `remaining_recursions` says how many more recursions
+    /// it's allowed to make.
+    pub fn reflected_color(&self, comps: &PreComp, remaining_recursions: usize) -> Color {
+        if remaining_recursions == 0 || comps.object.material.reflectiveness == 0.0 {
+            Color::black()
+        } else {
+            let reflect_ray = Ray::new(comps.over_point.clone(), comps.reflection.clone());
+            let color = self.color_at(&reflect_ray, remaining_recursions - 1);
+            color * comps.object.material.reflectiveness
         }
     }
 }
@@ -93,13 +108,11 @@ impl Default for World {
         let light = PointLight::new(point(-10., 10., -10.), Color::new_rgb(1., 1., 1.));
         let s1 = Shape::new(
             SPHERE,
-            Material::new(Color::new_rgb(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0),
+            Material::new(Color::new_rgb(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0, 0.),
             Transformation::identity(),
         );
         let mut s2 = Shape::default();
-        s2.modify_transform(|t| {
-            t.scale(0.5, 0.5, 0.5);
-        });
-        World::new(vec![&s1, &s2], vec![light])
+        s2.modify_transform(|t| t.scale(0.5, 0.5, 0.5));
+        World::new(vec![s1, s2], vec![light])
     }
 }

@@ -282,3 +282,14 @@ fn plane_intersect_from_below() {
     assert_approx_eq!(xs[0].t, 1.);
     assert_approx_eq!(xs[0].object, &p);
 }
+
+#[test]
+fn precompute_reflection() {
+    let plane = Shape::new_plane(Material::default(), Transformation::identity());
+    let plane = Arc::new(plane);
+    let a = consts::SQRT_2 / 2.0;
+    let r = Ray::new(point(0., 1., -1.), vector(0., -a, a));
+    let i = Intersection::new(consts::SQRT_2, plane);
+    let comps = i.prepare_computations(&r);
+    assert_approx_eq!(comps.reflection, &vector(0., a, a));
+}

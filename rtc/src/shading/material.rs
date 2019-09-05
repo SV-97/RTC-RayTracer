@@ -3,8 +3,6 @@ use crate::primitives::approx_eq::ApproxEq;
 use super::{Color, Pattern};
 
 #[derive(Debug, Clone)]
-
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub struct Material {
     pub color: Color,
     pub pattern: Option<Pattern>,
@@ -12,6 +10,8 @@ pub struct Material {
     pub diffuse: f32,
     pub specular: f32,
     pub shininess: f32,
+    /// Reflectiveness of the material. 0 is nonreflective, 1 is perfect mirror.
+    pub reflectiveness: f32,
 }
 
 impl Material {
@@ -22,6 +22,8 @@ impl Material {
         diffuse: f32,
         specular: f32,
         shininess: f32,
+        reflectiveness: f32,
+    ) -> Self {
         Material {
             color,
             ambient,
@@ -29,14 +31,17 @@ impl Material {
             specular,
             shininess,
             pattern,
+            reflectiveness,
         }
     }
+
     pub fn new(
         color: Color,
         ambient: f32,
         diffuse: f32,
         specular: f32,
         shininess: f32,
+        reflectiveness: f32,
     ) -> Self {
         Self::new_with_pattern(
             color,
@@ -45,13 +50,14 @@ impl Material {
             diffuse,
             specular,
             shininess,
+            reflectiveness,
         )
     }
 }
 
 impl Default for Material {
     fn default() -> Self {
-        Material::new(Color::new_rgb(1., 1., 1.), 0.1, 0.9, 0.9, 200.)
+        Material::new(Color::new_rgb(1., 1., 1.), 0.1, 0.9, 0.9, 200., 0.)
     }
 }
 

@@ -1,5 +1,4 @@
-use std::ops::Index;
-use std::sync::Arc;
+use std::{ops::Index, sync::Arc};
 
 use crate::primitives::{
     approx_eq::{ApproxEq, EPSILON_F64},
@@ -28,8 +27,9 @@ impl Intersection {
         if inside {
             normal = -normal;
         }
-        let over_point = &point + &normal * EPSILON_F64;
-        PreComp::new(point, eye, normal, self, inside, over_point)
+        let over_point = &point + &normal * EPSILON_F64 * 10.0;
+        let reflection = ray.direction.reflect(&normal);
+        PreComp::new(point, eye, normal, reflection, self, inside, over_point)
     }
 }
 
@@ -110,6 +110,7 @@ pub struct PreComp {
     pub point: Point,
     pub eye: Vec3D,
     pub normal: Vec3D,
+    pub reflection: Vec3D,
     pub t: f64,
     pub object: Arc<Shape>,
     pub inside: bool,
@@ -121,6 +122,7 @@ impl PreComp {
         point: Point,
         eye: Vec3D,
         normal: Vec3D,
+        reflection: Vec3D,
         intersection: Intersection,
         inside: bool,
         over_point: Point,
@@ -133,6 +135,7 @@ impl PreComp {
             object: intersection.object,
             inside,
             over_point,
+            reflection,
         }
     }
 }
