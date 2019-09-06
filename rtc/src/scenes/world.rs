@@ -4,6 +4,7 @@ use crate::{
     primitives::{
         ray::Ray,
         vector::{point, Point, ScalarProd, Transformation},
+        approx_eq::ApproxEq,
     },
     shading::{Color, Material, PointLight},
     shapes::{Intersections, PreComp, Shape, SPHERE},
@@ -94,7 +95,7 @@ impl World {
     /// Get the reflected color, `remaining_recursions` says how many more recursions
     /// it's allowed to make.
     pub fn reflected_color(&self, comps: &PreComp, remaining_recursions: usize) -> Color {
-        if remaining_recursions == 0 || comps.object.material.reflectiveness == 0.0 {
+        if remaining_recursions == 0 || comps.object.material.reflectiveness.approx_eq(0.0) {
             Color::black()
         } else {
             let reflect_ray = Ray::new(comps.over_point.clone(), comps.reflection.clone());
@@ -104,7 +105,7 @@ impl World {
     }
 
     pub fn refracted_color(&self, comps: &PreComp, remaining_recursions: usize) -> Color {
-        if remaining_recursions == 0 || comps.object.material.transparency == 0.0 {
+        if remaining_recursions == 0 || comps.object.material.transparency.approx_eq(0.0) {
             Color::black()
         } else {
             // Handle total internal reflection. Implementation based on Snell's Law
