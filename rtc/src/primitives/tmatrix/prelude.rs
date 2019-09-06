@@ -1,5 +1,7 @@
 //! Struct definition, construction macro, constructor, printing etc.
 
+use num_traits::Signed;
+
 use std::{cmp, convert::From, fmt, marker::PhantomData};
 
 use crate::{primitives::approx_eq::ApproxEq, utils::typelevel_nums::*};
@@ -116,7 +118,7 @@ impl<T, M: Nat + Val, N: Nat + Val> Matrix<T, M, N> {
 
 impl<T, M: Nat + Val, N: Nat + Val> fmt::Debug for Matrix<T, M, N>
 where
-    T: fmt::Debug + Default + Clone,
+    T: fmt::Debug + Default + Clone + Signed + PartialOrd,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Matrix {}x{}", M::val(), N::val())?;
@@ -124,7 +126,11 @@ where
             .iter_rows()
             .map(|row| {
                 row.map(|x| {
-                    let s = format!("{:?}", x);
+                    let s = if x >= &T::zero() {
+                        format!(" {:?}", x.abs()) // abs to convert -0.0 to 0.0 because fuck that shit
+                    } else {
+                        format!("{:?}", x)
+                    };
                     (s.len(), s)
                 })
                 .fold((0, vec![]), |(len, mut acc), (s_len, s)| {
@@ -146,7 +152,7 @@ where
                     .collect::<Vec<String>>()
                     .join(" ")
             })
-            .map(|row| format!("    |{}|", row))
+            .map(|row| format!("    |{} |", row))
             .collect::<Vec<String>>()
             .join("\n");
         writeln!(f, "{}", out)?;
