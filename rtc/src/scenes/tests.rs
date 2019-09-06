@@ -198,7 +198,7 @@ fn shade_hit_intersection_in_shadow() {
 }
 
 #[test]
-fn shadow_hit_offset_point() {
+fn shadow_hit_offset_over_point() {
     let r = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
     let shape = Shape::new(
         SPHERE,
@@ -211,6 +211,22 @@ fn shadow_hit_offset_point() {
     let comps = is[0].prepare_computations(&r, &is);
     assert!(comps.over_point.z() < -EPSILON_F64 / 2.0);
     assert!(comps.point.z() > comps.over_point.z());
+}
+
+#[test]
+fn under_point() {
+    let r = Ray::new(point(0., 0., -5.), vector(0., 0., 1.));
+    let shape = Shape::new(
+        SPHERE,
+        Material::default(),
+        Transformation::new_translation(0., 0., 1.),
+    );
+    let shape = Arc::new(shape);
+    let i = Intersection::new(5., shape);
+    let is = Intersections::new(vec![i]);
+    let comps = is[0].prepare_computations(&r, &is);
+    assert!(comps.under_point.z() > -EPSILON_F64 / 2.0);
+    assert!(comps.point.z() < comps.under_point.z());
 }
 
 #[test]
