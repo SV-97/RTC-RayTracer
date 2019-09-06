@@ -36,9 +36,10 @@ impl Intersection {
         let mut n1 = None;
         let mut n2 = None;
         for intersection in xs.iter() {
-            // no too sure about this
-            let i_eq_hit = self as *const _ == intersection as *const _;
+            // equivalent to self as *const _ == intersection as *const _
+            let i_eq_hit = std::ptr::eq(self, intersection);
             if i_eq_hit {
+                // dbg!(self, intersection);
                 n1 = Some(
                     containers
                         .last()
@@ -46,12 +47,15 @@ impl Intersection {
                         .unwrap_or(1.0),
                 );
             }
+            // Find the position of the current object in containers
             if let Some(position) = containers
                 .iter()
-                .position(|x| x as *const _ == &&intersection.object as *const _)
+                .position(|x| std::ptr::eq(x, &&intersection.object))
             {
+                // remove it if it's in there
                 containers.remove(position);
             } else {
+                // add it if it isn't
                 containers.push(&intersection.object);
             }
             if i_eq_hit {
@@ -64,6 +68,30 @@ impl Intersection {
                 break;
             }
         }
+        /* should be equivalent to the above
+        for intersection in xs.iter() {
+            let i_eq_hit = std::ptr::eq(self, intersection);
+            if i_eq_hit {
+                n1 = containers
+                        .last()
+                        .map(|o| o.material.refractive_index);
+            }
+            if let Some(position) = containers
+                .iter()
+                .position(|x| x as *const _ == &&intersection.object as *const _)
+            {
+                containers.remove(position);
+            } else {
+                containers.push(&intersection.object);
+            }
+            if i_eq_hit {
+                n2 = containers
+                        .last()
+                        .map(|o| o.material.refractive_index);
+                break;
+            }
+        }
+        */
         PreComp::new(
             point,
             eye,

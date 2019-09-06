@@ -299,7 +299,7 @@ fn precompute_reflection() {
 }
 
 #[test]
-fn refraction() {
+fn precompute_n1_n2() {
     let m1 = Material::new(Color::new_rgb(1., 1., 1.), 0.1, 0.9, 0.9, 200., 0., 1., 1.5);
     let s1 = Arc::new(Shape::new_sphere(
         m1,
@@ -326,7 +326,6 @@ fn refraction() {
         Intersection::new(6., Arc::clone(&s1)),
     ]);
     let vals = vec![
-        // this should actually be the right block but let's try it this way for now
         (1.0, 1.5), // (1.0, 1.5), //
         (1.5, 2.0), // (1.5, 2.0), //
         (2.0, 2.5), // (2.0, 2.5), //
@@ -336,6 +335,8 @@ fn refraction() {
     ];
     for (i, (n1, n2)) in vals.into_iter().enumerate() {
         let comps = xs[i].prepare_computations(&r, &xs);
+        dbg!((n1, n2));
+        dbg!((comps.n1, comps.n2));
         assert_approx_eq!(comps.n1, n1);
         assert_approx_eq!(comps.n2, n2);
     }
