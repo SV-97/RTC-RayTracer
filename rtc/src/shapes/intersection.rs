@@ -40,17 +40,13 @@ impl Intersection {
             let i_eq_hit = std::ptr::eq(self, intersection);
             if i_eq_hit {
                 // dbg!(self, intersection);
-                n1 = Some(
-                    containers
-                        .last()
-                        .map(|o| o.material.refractive_index)
-                        .unwrap_or(1.0),
-                );
+                n1 = containers.last().map(|o| o.material.refractive_index);
             }
+
             // Find the position of the current object in containers
             if let Some(position) = containers
                 .iter()
-                .position(|x| std::ptr::eq(x, &&intersection.object))
+                .position(|&x| Arc::ptr_eq(x, &intersection.object))
             {
                 // remove it if it's in there
                 containers.remove(position);
@@ -59,39 +55,10 @@ impl Intersection {
                 containers.push(&intersection.object);
             }
             if i_eq_hit {
-                n2 = Some(
-                    containers
-                        .last()
-                        .map(|o| o.material.refractive_index)
-                        .unwrap_or(1.0),
-                );
+                n2 = containers.last().map(|o| o.material.refractive_index);
                 break;
             }
         }
-        /* should be equivalent to the above
-        for intersection in xs.iter() {
-            let i_eq_hit = std::ptr::eq(self, intersection);
-            if i_eq_hit {
-                n1 = containers
-                        .last()
-                        .map(|o| o.material.refractive_index);
-            }
-            if let Some(position) = containers
-                .iter()
-                .position(|x| x as *const _ == &&intersection.object as *const _)
-            {
-                containers.remove(position);
-            } else {
-                containers.push(&intersection.object);
-            }
-            if i_eq_hit {
-                n2 = containers
-                        .last()
-                        .map(|o| o.material.refractive_index);
-                break;
-            }
-        }
-        */
         PreComp::new(
             point,
             eye,
@@ -101,8 +68,8 @@ impl Intersection {
             inside,
             over_point,
             under_point,
-            n1.unwrap(),
-            n2.unwrap(),
+            n1.unwrap_or(1.0),
+            n2.unwrap_or(1.0),
         )
     }
 }
