@@ -335,8 +335,6 @@ fn precompute_n1_n2() {
     ];
     for (i, (n1, n2)) in vals.into_iter().enumerate() {
         let comps = xs[i].prepare_computations(&r, &xs);
-        dbg!((n1, n2));
-        dbg!((comps.n1, comps.n2));
         assert_approx_eq!(comps.n1, n1);
         assert_approx_eq!(comps.n2, n2);
     }
