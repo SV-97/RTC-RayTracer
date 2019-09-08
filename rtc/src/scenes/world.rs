@@ -2,8 +2,9 @@ use std::sync::Arc;
 
 use crate::{
     primitives::{
+        approx_eq::ApproxEq,
         ray::Ray,
-        vector::{point, Point, Transformation},
+        vector::{point, Point, ScalarProd, Transformation},
     },
     shading::{Color, Material, PointLight},
     shapes::{Intersections, PreComp, Shape, SPHERE},
@@ -56,18 +57,28 @@ impl World {
             .collect::<Vec<_>>()
     }
 
-    pub fn shade_hit(&self, comp: &PreComp) -> Color {
+    pub fn shade_hit(&self, comp: &PreComp, remaining_recursions: usize) -> Color {
         self.lights
             .iter()
             .zip(self.is_shadowed(&comp.over_point).into_iter())
             .map(|(light, shadowed)| {
-                light.lighting(
+                let surface = light.lighting(
+                    Arc::clone(&comp.object),
                     &comp.object.material,
-                    &comp.point,
+                    &comp.over_point,
                     &comp.eye,
                     &comp.normal,
                     shadowed,
-                )
+                );
+                let reflected = self.reflected_color(comp, remaining_recursions);
+                let refracted = self.refracted_color(comp, remaining_recursions);
+                let material = &comp.object.material;
+                if material.reflectiveness > 0.0 && material.transparency > 0.0 {
+                    let reflectance = comp.schlick();
+                    surface + reflected * reflectance as f32 + refracted * (1. - reflectance) as f32
+                } else {
+                    surface + reflected + refracted
+                }
             })
             .fold(None, |blend: Option<Color>, new_color| match blend {
                 Some(blend) => Some(new_color.blend_lighten_only(blend)),
@@ -76,14 +87,48 @@ impl World {
             .unwrap()
     }
 
-    pub fn color_at(&self, ray: &Ray) -> Color {
+    pub fn color_at(&self, ray: &Ray, remaining_recursions: usize) -> Color {
         let is = self.intersect(ray);
         match is.hit() {
             Some(hit) => {
-                let precomp = hit.clone().prepare_computations(ray);
-                self.shade_hit(&precomp)
+                let precomp = hit.prepare_computations(ray, &is);
+                self.shade_hit(&precomp, remaining_recursions)
             }
             None => Color::black(),
+        }
+    }
+
+    /// Get the reflected color, `remaining_recursions` says how many more recursions
+    /// it's allowed to make.
+    pub fn reflected_color(&self, comps: &PreComp, remaining_recursions: usize) -> Color {
+        if remaining_recursions == 0 || comps.object.material.reflectiveness.approx_eq(0.0) {
+            Color::black()
+        } else {
+            let reflect_ray = Ray::new(comps.over_point.clone(), comps.reflection.clone());
+            let color = self.color_at(&reflect_ray, remaining_recursions - 1);
+            color * comps.object.material.reflectiveness
+        }
+    }
+
+    pub fn refracted_color(&self, comps: &PreComp, remaining_recursions: usize) -> Color {
+        if remaining_recursions == 0 || comps.object.material.transparency.approx_eq(0.0) {
+            Color::black()
+        } else {
+            // Handle total internal reflection. Implementation based on Snell's Law
+            let n_ratio = comps.n1 / comps.n2;
+            let cos_i = (&comps.eye).scalar_prod(&comps.normal);
+            let sin2_t = n_ratio.powi(2) as f64 * (1. - cos_i.powi(2));
+            if sin2_t > 1.0 {
+                Color::black()
+            } else {
+                let n_ratio = n_ratio as f64;
+                let cos_t = (1.0 - sin2_t).sqrt();
+                let direction =
+                    comps.normal.clone() * (n_ratio * cos_i - cos_t) - comps.eye.clone() * n_ratio;
+                let refract_ray = Ray::new(comps.under_point.clone(), direction);
+                self.color_at(&refract_ray, remaining_recursions - 1)
+                    * comps.object.material.transparency
+            }
         }
     }
 }
@@ -93,13 +138,20 @@ impl Default for World {
         let light = PointLight::new(point(-10., 10., -10.), Color::new_rgb(1., 1., 1.));
         let s1 = Shape::new(
             SPHERE,
-            Material::new(Color::new_rgb(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0),
+            Material::new(
+                Color::new_rgb(0.8, 1.0, 0.6),
+                0.1,
+                0.7,
+                0.2,
+                200.0,
+                0.,
+                0.,
+                1.,
+            ),
             Transformation::identity(),
         );
         let mut s2 = Shape::default();
-        s2.modify_transform(|t| {
-            t.scale(0.5, 0.5, 0.5);
-        });
-        World::new(vec![&s1, &s2], vec![light])
+        s2.modify_transform(|t| t.scale(0.5, 0.5, 0.5));
+        World::new(vec![s1, s2], vec![light])
     }
 }

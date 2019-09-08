@@ -9,6 +9,8 @@ use crate::primitives::{
     vector::{point, Point, Transformation},
 };
 
+static MAXIMUM_REFLECTION_RECURSION_DEPTH: usize = 2;
+
 use super::World;
 
 /// Virtual camera
@@ -123,7 +125,10 @@ impl Camera {
                 for y in chunk {
                     for x in 0..width {
                         let ray = t_cam.read().unwrap().ray_for_pixel(x, y);
-                        let color = t_world.read().unwrap().color_at(&ray);
+                        let color = t_world
+                            .read()
+                            .unwrap()
+                            .color_at(&ray, MAXIMUM_REFLECTION_RECURSION_DEPTH);
                         let _ = t_tx.send((x, y, color));
                     }
                 }

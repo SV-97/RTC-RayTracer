@@ -29,8 +29,8 @@ impl fmt::Debug for Shape {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Shape {{ transformation: {:?}, inverse_transformation: {:?} , material: {:?}}}",
-            self.transform, self.inverse_transform, self.material
+            "Shape{{\nintersect: @ {:p},\nnormal_at: @ {:p},\ntransformation: {:?},\ninverse_transformation: {:?},\nmaterial: {:?}\n}}",
+            self.intersect as *const (), self.normal_at as *const (), self.transform, self.inverse_transform, self.material
         )
     }
 }
