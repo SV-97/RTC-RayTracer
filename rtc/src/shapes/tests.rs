@@ -442,3 +442,77 @@ fn surface_normal_cube() {
         assert_approx_eq!(calculated_normal, &normal);
     }
 }
+
+#[test]
+fn miss_cylinder() {
+    let examples = vec![
+        (point(1., 0., 0.), vector(0., 1., 0.)),
+        (point(0., 0., 0.), vector(0., 1., 0.)),
+        (point(0., 0., -5.), vector(1., 1., 1.)),
+    ];
+    let c = Arc::new(Shape::default_cylinder());
+    for (origin, direction) in examples.into_iter() {
+        dbg!(origin.clone());
+        let r = Ray::new(origin, direction.unit());
+        let xs = (c.intersect)(Arc::clone(&c), &r);
+        assert!(xs.is_none());
+    }
+}
+
+#[test]
+fn intersect_cylinder() {
+    let examples = vec![
+        (point(1., 0., -5.), vector(0., 0., 1.), 5., 5.),
+        (point(0., 0., -5.), vector(0., 0., 1.), 4., 6.),
+        (point(0.5, 0., -5.), vector(0.1, 1., 1.), 6.80798, 7.08872),
+    ];
+    let c = Arc::new(Shape::default_cylinder());
+    for (origin, direction, t1, t2) in examples.into_iter() {
+        let r = Ray::new(origin, direction.unit());
+        let xs = (c.intersect)(Arc::clone(&c), &r).unwrap();
+        assert_eq!(xs.len(), 2);
+        assert_approx_eq!(xs[0].t, t1);
+        assert_approx_eq!(xs[1].t, t2);
+    }
+}
+
+#[test]
+fn surface_normal_cylinder() {
+    let examples = vec![
+        (point(1., 0., 0.), vector(1., 0., 0.)),
+        (point(0., 5., -1.), vector(0., 0., -1.)),
+        (point(0., -2., 1.), vector(0., 0., 1.)),
+        (point(-1., 1., 0.), vector(-1., 0., 0.)),
+    ];
+    let c = Arc::new(Shape::default_cylinder());
+    for (point, normal) in examples.into_iter() {
+        let calculated_normal = (c.normal_at)(Arc::clone(&c), &point);
+        assert_approx_eq!(calculated_normal, &normal);
+    }
+}
+
+#[test]
+#[ignore]
+/// Currently ignored because I can't get it to work (without a const fn or introducing state
+/// to shape kinds which I don't want to do)
+fn truncated_cylinder() {
+    let examples = vec![
+        (point(0., 1.5, 0.), vector(0.1, 1., 0.), 0),
+        (point(0., 3., -5.), vector(0., 0., 1.), 0),
+        (point(0., 0., -5.), vector(0., 0., 1.), 0),
+        (point(0., 2., -5.), vector(0., 0., 1.), 0),
+        (point(0., 1., -5.), vector(0., 0., 1.), 0),
+        (point(0., 1.5, -2.), vector(0., 0., 1.), 0),
+    ];
+    let c = Arc::new(Shape::new_trunc_cylinder(
+        Material::default(),
+        Transformation::new_scaling(1., 0.5, 1.).translated(0., 3., 0.),
+    ));
+    for (point, direction, count) in examples.into_iter() {
+        let r = Ray::new(point, direction.unit());
+        let xs_len = ((c.intersect)(Arc::clone(&c), &r))
+            .map(|xs| xs.len())
+            .unwrap_or(0);
+        assert_eq!(xs_len, count);
+    }
+}
