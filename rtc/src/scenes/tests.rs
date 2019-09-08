@@ -7,7 +7,7 @@ use crate::{
         ray::Ray,
         vector::{point, vector, Point, Transformation},
     },
-    shading::{Color, Material, PointLight},
+    shading::{Color, Material, Pattern, PointLight, TEST_PATTERN},
     shapes::{Intersection, Intersections, Shape, SPHERE},
 };
 
@@ -386,7 +386,7 @@ fn total_internal_reflection() {
         let s1 = Shape::new(
             SPHERE,
             Material::new(
-                Color::new_rgb(1., 1.0, 1.),
+                Color::new_rgb(1.0, 1.0, 1.0),
                 0.1,
                 0.9,
                 0.9,
@@ -411,4 +411,105 @@ fn total_internal_reflection() {
     let comps = xs[1].prepare_computations(&r, &xs);
     let c = w.refracted_color(&comps, 5);
     assert_approx_eq!(c, Color::black());
+}
+
+#[test]
+fn refracted_color() {
+    let w = {
+        let light = PointLight::new(point(-10., 10., -10.), Color::new_rgb(1., 1., 1.));
+        let s1 = Shape::new(
+            SPHERE,
+            Material::new_with_pattern(
+                Color::new_rgb(1.0, 1.0, 1.0),
+                Some(Pattern::new(TEST_PATTERN, Transformation::identity())),
+                1.0,
+                0.7,
+                0.2,
+                200.0,
+                0.,
+                0.,
+                1.0,
+            ),
+            Transformation::identity(),
+        );
+        let mut m2 = Material::default();
+        m2.transparency = 1.0;
+        m2.refractive_index = 1.5;
+        let mut s2 = Shape::new_sphere(m2, Transformation::identity());
+        s2.modify_transform(|t| t.scale(0.5, 0.5, 0.5));
+        World::new(vec![s1, s2], vec![light])
+    };
+    let r = Ray::new(point(0., 0., 0.1), vector(0., 1., 0.));
+    let shape_a = &w.objects[0];
+    let shape_b = &w.objects[1];
+    let xs = Intersections::new(vec![
+        Intersection::new(-0.9899, Arc::clone(shape_a)),
+        Intersection::new(-0.4899, Arc::clone(shape_b)),
+        Intersection::new(0.4899, Arc::clone(shape_b)),
+        Intersection::new(0.9899, Arc::clone(shape_a)),
+    ]);
+    let comps = xs[2].prepare_computations(&r, &xs);
+    let c = w.refracted_color(&comps, 5);
+    assert_approx_eq!(c, Color::new_rgb(0., 0.99888, 0.04725));
+}
+
+#[test]
+fn shade_hit_transparent() {
+    let mut w = World::default();
+
+    let mut m = Material::default();
+    m.transparency = 0.5;
+    m.refractive_index = 1.5;
+    let floor = Arc::new(Shape::new_plane(
+        m,
+        Transformation::new_translation(0., -1., 0.),
+    ));
+    w.objects.push(Arc::clone(&floor));
+
+    let mut m2 = Material::default();
+    m2.color = Color::new_rgb(1., 0., 0.);
+    m2.ambient = 0.5;
+    let ball = Arc::new(Shape::new_sphere(
+        m2,
+        Transformation::new_translation(0., -3.5, -0.5),
+    ));
+    w.objects.push(Arc::clone(&ball));
+
+    let a = consts::SQRT_2 / 2.0;
+    let r = Ray::new(point(0., 0., -3.), vector(0., -a, a));
+    let xs = Intersections::new(vec![Intersection::new(consts::SQRT_2, Arc::clone(&floor))]);
+    let comps = xs[0].prepare_computations(&r, &xs);
+    let c = w.shade_hit(&comps, 5);
+    assert_approx_eq!(c, Color::new_rgb(0.93642, 0.68642, 0.68642));
+}
+
+#[test]
+fn shade_hit_reflectance() {
+    let mut w = World::default();
+
+    let mut m = Material::default();
+    m.transparency = 0.5;
+    m.refractive_index = 1.5;
+    m.reflectiveness = 0.5;
+    let floor = Arc::new(Shape::new_plane(
+        m,
+        Transformation::new_translation(0., -1., 0.),
+    ));
+    w.objects.push(Arc::clone(&floor));
+
+    let mut m2 = Material::default();
+    m2.color = Color::new_rgb(1., 0., 0.);
+    m2.ambient = 0.5;
+    let ball = Arc::new(Shape::new_sphere(
+        m2,
+        Transformation::new_translation(0., -3.5, -0.5),
+    ));
+    w.objects.push(Arc::clone(&ball));
+
+    let a = consts::SQRT_2 / 2.0;
+    let r = Ray::new(point(0., 0., -3.), vector(0., -a, a));
+    let xs = Intersections::new(vec![Intersection::new(consts::SQRT_2, Arc::clone(&floor))]);
+    let comps = xs[0].prepare_computations(&r, &xs);
+    let c = w.shade_hit(&comps, 5);
+    assert_approx_eq!(c, Color::new_rgb(0.93391, 0.69643, 0.69243));
 }

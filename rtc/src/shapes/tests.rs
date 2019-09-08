@@ -1,5 +1,4 @@
-use std::f64::consts;
-use std::sync::Arc;
+use std::{f64::consts, sync::Arc};
 
 use super::*;
 
@@ -326,16 +325,62 @@ fn precompute_n1_n2() {
         Intersection::new(6., Arc::clone(&s1)),
     ]);
     let vals = vec![
-        (1.0, 1.5), // (1.0, 1.5), //
-        (1.5, 2.0), // (1.5, 2.0), //
-        (2.0, 2.5), // (2.0, 2.5), //
-        (2.5, 2.5), // (2.5, 2.0), //
-        (2.5, 1.5), // (2.0, 2.5), //
-        (1.5, 1.0), // (2.5, 1.5), //
+        (1.0, 1.5),
+        (1.5, 2.0),
+        (2.0, 2.5),
+        (2.5, 2.5),
+        (2.5, 1.5),
+        (1.5, 1.0),
     ];
     for (i, (n1, n2)) in vals.into_iter().enumerate() {
         let comps = xs[i].prepare_computations(&r, &xs);
         assert_approx_eq!(comps.n1, n1);
         assert_approx_eq!(comps.n2, n2);
     }
+}
+
+#[test]
+fn schlick_total_internal_reflection() {
+    let shape = Arc::new(Shape::new_sphere(
+        Material::glass(),
+        Transformation::identity(),
+    ));
+    let a = consts::SQRT_2 / 2.0;
+    let r = Ray::new(point(0., 0., a), vector(0., 1., 0.));
+    let xs = Intersections::new(vec![
+        Intersection::new(-a, Arc::clone(&shape)),
+        Intersection::new(a, Arc::clone(&shape)),
+    ]);
+    let comps = xs[1].prepare_computations(&r, &xs);
+    let reflectance = comps.schlick();
+    assert_approx_eq!(reflectance, 1.0);
+}
+
+#[test]
+fn reflectance_perpendicular_ray() {
+    let shape = Arc::new(Shape::new_sphere(
+        Material::glass(),
+        Transformation::identity(),
+    ));
+    let r = Ray::new(point(0., 0., 0.), vector(0., 1., 0.));
+    let xs = Intersections::new(vec![
+        Intersection::new(-1., Arc::clone(&shape)),
+        Intersection::new(1., Arc::clone(&shape)),
+    ]);
+    let comps = xs[1].prepare_computations(&r, &xs);
+    let reflectance = comps.schlick();
+    assert_approx_eq!(reflectance, 0.04);
+}
+
+#[test]
+fn schlick_approximation_for_small_angle() {
+    let shape = Arc::new(Shape::new_sphere(
+        Material::glass(),
+        Transformation::identity(),
+    ));
+    let r = Ray::new(point(0., 0.99, -2.), vector(0., 0., 1.));
+    let xs = Intersections::new(vec![Intersection::new(1.8589, Arc::clone(&shape))]);
+    let comps = xs[0].prepare_computations(&r, &xs);
+    let reflectance = comps.schlick();
+    assert_approx_eq!(reflectance, 0.48873);
 }

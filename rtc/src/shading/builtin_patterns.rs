@@ -64,7 +64,7 @@ fn checkers_white_black(point: &Point) -> Color {
     let x = point.x();
     let y = point.y();
     let z = point.z();
-    if ((x.floor() + y.floor() + z.floor()) % 2.0).approx_eq(0.0) {
+    if ((x.floor() + y.floor() + z.floor()) % 2.0) == 0.0 {
         color_1
     } else {
         color_2

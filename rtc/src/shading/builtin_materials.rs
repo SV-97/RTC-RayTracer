@@ -1,4 +1,3 @@
-
 use super::{Color, Material};
 
 impl Material {

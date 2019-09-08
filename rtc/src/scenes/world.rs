@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use crate::{
     primitives::{
+        approx_eq::ApproxEq,
         ray::Ray,
         vector::{point, Point, ScalarProd, Transformation},
-        approx_eq::ApproxEq,
     },
     shading::{Color, Material, PointLight},
     shapes::{Intersections, PreComp, Shape, SPHERE},
@@ -65,14 +65,20 @@ impl World {
                 let surface = light.lighting(
                     Arc::clone(&comp.object),
                     &comp.object.material,
-                    &comp.point,
+                    &comp.over_point,
                     &comp.eye,
                     &comp.normal,
                     shadowed,
                 );
                 let reflected = self.reflected_color(comp, remaining_recursions);
                 let refracted = self.refracted_color(comp, remaining_recursions);
-                surface + reflected + refracted
+                let material = &comp.object.material;
+                if material.reflectiveness > 0.0 && material.transparency > 0.0 {
+                    let reflectance = comp.schlick();
+                    surface + reflected * reflectance as f32 + refracted * (1. - reflectance) as f32
+                } else {
+                    surface + reflected + refracted
+                }
             })
             .fold(None, |blend: Option<Color>, new_color| match blend {
                 Some(blend) => Some(new_color.blend_lighten_only(blend)),
@@ -115,7 +121,13 @@ impl World {
             if sin2_t > 1.0 {
                 Color::black()
             } else {
-                Color::white()
+                let n_ratio = n_ratio as f64;
+                let cos_t = (1.0 - sin2_t).sqrt();
+                let direction =
+                    comps.normal.clone() * (n_ratio * cos_i - cos_t) - comps.eye.clone() * n_ratio;
+                let refract_ray = Ray::new(comps.under_point.clone(), direction);
+                self.color_at(&refract_ray, remaining_recursions - 1)
+                    * comps.object.material.transparency
             }
         }
     }

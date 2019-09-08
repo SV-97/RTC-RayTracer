@@ -2,8 +2,7 @@ use std::{f64::consts, sync::Arc};
 
 use crate::{
     assert_approx_eq,
-    primitives::{
-        vector::{point, vector, Point, Transformation}},
+    primitives::vector::{point, vector, Point, Transformation},
     shapes::Shape,
 };
 

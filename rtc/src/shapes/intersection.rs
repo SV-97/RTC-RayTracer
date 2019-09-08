@@ -28,8 +28,8 @@ impl Intersection {
             normal = -normal;
         }
         // 10.0 is a factor that may be tweaked depending on visual artifacts
-        let over_point = &point + &normal * EPSILON_F64 * 10.0;
-        let under_point = &point - &normal * EPSILON_F64 * 10.0;
+        let over_point = &point + &normal * EPSILON_F64;
+        let under_point = &point - &normal * EPSILON_F64;
         let reflection = ray.direction.reflect(&normal);
 
         let mut containers: Vec<&Arc<Shape>> = Vec::new();
@@ -187,5 +187,20 @@ impl PreComp {
             n2,
             under_point,
         }
+    }
+
+    pub fn schlick(&self) -> f64 {
+        let mut cos = (&self.eye).scalar_prod(&self.normal);
+        if self.n1 > self.n2 {
+            let n = self.n1 / self.n2;
+            let sin2_t = n.powi(2) as f64 * (1.0 - cos.powi(2));
+            if sin2_t > 1.0 {
+                return 1.0;
+            }
+            let cos_t = (1.0 - sin2_t).sqrt();
+            cos = cos_t;
+        }
+        let r0 = ((self.n1 - self.n2) / (self.n1 + self.n2)).powi(2) as f64;
+        r0 + (1.0 - r0) * (1.0 - cos).powi(5)
     }
 }
