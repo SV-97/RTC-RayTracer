@@ -384,3 +384,61 @@ fn schlick_approximation_for_small_angle() {
     let reflectance = comps.schlick();
     assert_approx_eq!(reflectance, 0.48873);
 }
+
+#[test]
+fn intersect_cube() {
+    let examples = vec![
+        (point(5., 0.5, 0.), vector(-1., 0., 0.), 4., 6.), // +x
+        (point(-5., 0.5, 0.), vector(1., 0., 0.), 4., 6.), // -x
+        (point(0.5, 5., 0.), vector(0., -1., 0.), 4., 6.), // +y
+        (point(0.5, -5., 0.), vector(0., 1., 0.), 4., 6.), // -y
+        (point(0.5, 0., 5.), vector(0., 0., -1.), 4., 6.), // +z
+        (point(0.5, 0., -5.), vector(0., 0., 1.), 4., 6.), // -z
+        (point(0., 0.5, 0.), vector(0., 0., 1.), -1., 1.), // inside
+    ];
+    let c = Arc::new(Shape::default_cube());
+    for (origin, direction, t1, t2) in examples.into_iter() {
+        let r = Ray::new(origin, direction);
+        let xs = (c.intersect)(Arc::clone(&c), &r).unwrap();
+        assert_eq!(xs.len(), 2);
+        assert_approx_eq!(xs[0].t, t1);
+        assert_approx_eq!(xs[1].t, t2);
+    }
+}
+
+#[test]
+fn miss_cube() {
+    let examples = vec![
+        (point(-2., 0., 0.), vector(0.2673, 0.5345, 0.8018)),
+        (point(0., -2., 0.), vector(0.8018, 0.2673, 0.5345)),
+        (point(0., 0., -2.), vector(0.5345, 0.8018, 0.2673)),
+        (point(2., 0., 2.), vector(0., 0., -1.)),
+        (point(0., 2., 2.), vector(0., -1., 0.)),
+        (point(2., 2., 0.), vector(-1., 0., 0.)),
+    ];
+    let c = Arc::new(Shape::default_cube());
+    for (origin, direction) in examples.into_iter() {
+        let r = Ray::new(origin, direction);
+        let xs = (c.intersect)(Arc::clone(&c), &r);
+        assert!(xs.is_none());
+    }
+}
+
+#[test]
+fn surface_normal_cube() {
+    let examples = vec![
+        (point(1., 0.5, -0.8), vector(1., 0., 0.)),
+        (point(-1., -0.2, 0.9), vector(-1., 0., 0.)),
+        (point(-0.4, 1., -0.1), vector(0., 1., 0.)),
+        (point(0.3, -1., -0.7), vector(0., -1., 0.)),
+        (point(-0.6, 0.3, 1.), vector(0., 0., 1.)),
+        (point(0.4, 0.4, -1.), vector(0., 0., -1.)),
+        (point(1., 1., 1.), vector(1., 0., 0.)),
+        (point(-1., -1., -1.), vector(-1., 0., 0.)),
+    ];
+    let c = Arc::new(Shape::default_cube());
+    for (point, normal) in examples.into_iter() {
+        let calculated_normal = (c.normal_at)(Arc::clone(&c), &point);
+        assert_approx_eq!(calculated_normal, &normal);
+    }
+}

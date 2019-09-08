@@ -69,6 +69,33 @@ impl Shape {
     }
 }
 
+/// Transform a ray to object space, and get all intersections via f_intersect
+pub fn base_shape_intersect(
+    shape: Arc<Shape>,
+    ray: &Ray,
+    f_intersect: impl Fn(Arc<Shape>, Ray) -> Option<Intersections>,
+) -> Option<Intersections> {
+    let inverse = shape.inverse_transform();
+    let ray2 = ray.transform(inverse);
+    f_intersect(shape, ray2)
+}
+
+/// Applies default transformations, calls a function that operates on the object point and
+/// transforms the returned object vector into a world space vector
+pub fn base_shape_normal(
+    shape: Arc<Shape>,
+    point: &Point,
+    f_object_normal: impl Fn(Arc<Shape>, Point) -> Vec3D,
+) -> Vec3D {
+    let inverse = shape.inverse_transform();
+    let object_point = inverse * point;
+    let world_transform = inverse.transpose();
+    let object_normal = f_object_normal(shape, object_point);
+    let mut out = world_transform * object_normal;
+    out.set_w(0.0);
+    out.unit()
+}
+
 impl ApproxEq for &Shape {
     fn approx_eq(self, other: Self) -> bool {
         self.transform.approx_eq(&other.transform) && self.material.approx_eq(&other.material)

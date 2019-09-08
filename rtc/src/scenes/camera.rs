@@ -9,7 +9,7 @@ use crate::primitives::{
     vector::{point, Point, Transformation},
 };
 
-static MAXIMUM_REFLECTION_RECURSION_DEPTH: usize = 2;
+static MAXIMUM_REFLECTION_RECURSION_DEPTH: usize = 5;
 
 use super::World;
 

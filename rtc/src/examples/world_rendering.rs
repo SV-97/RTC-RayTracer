@@ -559,3 +559,85 @@ pub fn world_rendering_7() -> std::io::Result<()> {
     let r = Rendering::new("world_render_7", canvas);
     r.save_to_file()
 }
+
+pub fn world_rendering_8() -> std::io::Result<()> {
+    let checkers = Material::new_with_pattern(
+        Color::from((50, 50, 70)),
+        Some(Pattern::new(
+            CHECKERS_WHITE_BLACK,
+            Transformation::new_scaling(1., 1., 1.),
+        )),
+        0.1,
+        0.3,
+        0.3,
+        200.,
+        0.05,
+        0.,
+        1.,
+    );
+    let reddish = Material::new_with_pattern(
+        Color::from((50, 50, 70)),
+        Some(Pattern::new(
+            RING_XZ_WHITE_BLACK,
+            Transformation::new_scaling(1., 1., 1.),
+        )),
+        0.1,
+        0.3,
+        0.3,
+        200.,
+        0.05,
+        0.,
+        1.,
+    );
+    let glass = Material::new(
+        Color::from((20, 20, 20)),
+        0.1,
+        0.1,
+        0.8,
+        2000.,
+        0.9,
+        0.99,
+        1.5,
+    );
+    let mirror = Material::new(Color::from((1, 1, 1)), 0.2, 0.8, 0.8, 200., 0.9, 0., 1.);
+    let frames = 36;
+    for i in 0..frames {
+        let angle = consts::PI * 2. * i as f64 / frames as f64;
+        let world = World::new(
+            vec![
+                Shape::new_cube(
+                    mirror.clone(),
+                    Transformation::new_scaling(3., 0.5, 3.)
+                        .rotated_z(angle * 0.5)
+                        .rotated_y(angle * 0.75),
+                ),
+                Shape::new_sphere(glass.clone(), Transformation::new_translation(0., 6., 0.)),
+                Shape::new_plane(
+                    checkers.clone(),
+                    Transformation::new_translation(0., -5., 0.),
+                ),
+                Shape::new_plane(
+                    reddish.clone(),
+                    Transformation::new_translation(0., 25., 0.),
+                ),
+            ],
+            vec![PointLight::new(point(0., 0., 5.), Color::white() * 3.8)],
+        );
+
+        let from = point(0., 10., 0.);
+        let to = point(0., 0., 0.);
+        let up = vector(1., 0., 0.);
+
+        let camera = Camera::new(
+            900,
+            900,
+            consts::FRAC_PI_2,
+            Transformation::new_view(&from, &to, &up),
+        );
+
+        let canvas = camera.render(world);
+        let r = Rendering::new(format!("world_render_8_{}", i), canvas);
+        r.save_to_file()?;
+    }
+    Ok(())
+}
